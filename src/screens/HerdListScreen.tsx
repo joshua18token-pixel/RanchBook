@@ -34,7 +34,7 @@ function parseDateRange(query: string): { from: number; to: number } | null {
   return { from: fromYear * 100 + fromMonth, to: toYear * 100 + toMonth };
 }
 
-export default function HerdListScreen({ navigation }: any) {
+export default function HerdListScreen({ navigation, route }: any) {
   const [cows, setCows] = useState<Cow[]>([]);
   const [query, setQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
@@ -137,13 +137,22 @@ export default function HerdListScreen({ navigation }: any) {
         }
         contentContainerStyle={cows.length === 0 ? styles.emptyContainer : undefined}
       />
-      <TouchableOpacity
-        style={styles.exportFab}
-        onPress={handleExport}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.exportFabText}>📊</Text>
-      </TouchableOpacity>
+      <View style={styles.leftFabs}>
+        <TouchableOpacity
+          style={styles.exportFab}
+          onPress={handleExport}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.exportFabText}>📊</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.teamFab}
+          onPress={() => navigation.navigate('Team', { ranchId: route.params?.ranchId, myRole: route.params?.myRole })}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.teamFabText}>👥</Text>
+        </TouchableOpacity>
+      </View>
       <TouchableOpacity
         style={styles.fab}
         onPress={() => navigation.navigate('AddCow')}
@@ -195,13 +204,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statusText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
-  exportFab: {
+  leftFabs: {
     position: 'absolute',
     bottom: 30,
     left: 20,
+    flexDirection: 'row',
+  },
+  exportFab: {
     width: 56,
     height: 56,
     borderRadius: 28,
+    marginRight: 10,
     backgroundColor: '#8B4513',
     alignItems: 'center',
     justifyContent: 'center',
@@ -212,6 +225,20 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   exportFabText: { fontSize: 24 },
+  teamFab: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#2D5016',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  teamFabText: { fontSize: 24 },
   fab: {
     position: 'absolute',
     bottom: 30,
