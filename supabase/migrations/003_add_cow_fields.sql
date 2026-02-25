@@ -1,0 +1,5 @@
+-- Add missing columns to cows table
+ALTER TABLE cows ADD COLUMN IF NOT EXISTS birth_month INTEGER;
+ALTER TABLE cows ADD COLUMN IF NOT EXISTS birth_year INTEGER;
+ALTER TABLE cows ADD COLUMN IF NOT EXISTS pasture_id TEXT;
+ALTER TABLE cows ADD COLUMN IF NOT EXISTS photos JSONB;

@@ -35,6 +35,8 @@ function parseDateRange(query: string): { from: number; to: number } | null {
 }
 
 export default function HerdListScreen({ navigation, route }: any) {
+  const ranchId = route.params?.ranchId;
+  const myRole = route.params?.myRole;
   const [cows, setCows] = useState<Cow[]>([]);
   const [query, setQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
@@ -42,33 +44,33 @@ export default function HerdListScreen({ navigation, route }: any) {
 
   const loadCows = useCallback(async () => {
     if (!query.trim()) {
-      setCows(await getAllCows());
+      setCows(await getAllCows(ranchId));
       return;
     }
     const range = parseDateRange(query.trim());
     if (range) {
-      const all = await getAllCows();
+      const all = await getAllCows(ranchId);
       setCows(all.filter(cow => {
         if (!cow.birthMonth || !cow.birthYear) return false;
         const cowDate = cow.birthYear * 100 + cow.birthMonth;
         return cowDate >= range.from && cowDate <= range.to;
       }));
     } else {
-      setCows(await searchCows(query));
+      setCows(await searchCows(query, ranchId));
     }
   }, [query]);
 
   useFocusEffect(
     useCallback(() => {
       loadCows();
-      getAllPastures().then(setPastures);
+      getAllPastures(ranchId).then(setPastures);
     }, [loadCows])
   );
 
   const handleExport = async () => {
     try {
-      const allCows = await getAllCows();
-      const allPastures = await getAllPastures();
+      const allCows = await getAllCows(ranchId);
+      const allPastures = await getAllPastures(ranchId);
       await exportToExcelAndEmail(allCows, allPastures);
     } catch (e: any) {
       Alert.alert('Export Error', e.message || 'Failed to export');
@@ -91,7 +93,7 @@ export default function HerdListScreen({ navigation, route }: any) {
     return (
     <TouchableOpacity
       style={styles.cowRow}
-      onPress={() => navigation.navigate('CowDetail', { cowId: item.id })}
+      onPress={() => navigation.navigate('CowDetail', { cowId: item.id, ranchId, myRole })}
       activeOpacity={0.7}
     >
       <View style={styles.cowInfo}>

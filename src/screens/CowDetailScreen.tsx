@@ -30,7 +30,7 @@ const STATUS_COLORS: Record<CowStatus, string> = {
 };
 
 export default function CowDetailScreen({ route, navigation }: any) {
-  const { cowId } = route.params;
+  const { cowId, ranchId, myRole } = route.params;
   const [cow, setCow] = useState<Cow | null>(null);
   const [noteText, setNoteText] = useState('');
   const [showStatusPicker, setShowStatusPicker] = useState(false);
@@ -48,7 +48,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
   const [editBirthYear, setEditBirthYear] = useState('');
 
   const loadCow = useCallback(async () => {
-    const all = await getAllCows();
+    const all = await getAllCows(ranchId);
     const found = all.find(c => c.id === cowId);
     setCow(found || null);
     if (found) {
@@ -61,7 +61,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
   }, [cowId]);
 
   useEffect(() => {
-    getAllPastures().then(setPastures);
+    getAllPastures(ranchId).then(setPastures);
   }, []);
 
   useFocusEffect(
@@ -103,7 +103,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
 
   const handleAddPasture = async () => {
     if (!newPastureName.trim() || !cow) return;
-    const p = await addPasture(newPastureName.trim());
+    const p = await addPasture(newPastureName.trim(), ranchId);
     setPastures([...pastures, p]);
     await updateCow(cow.id, { pastureId: p.id });
     setNewPastureName('');

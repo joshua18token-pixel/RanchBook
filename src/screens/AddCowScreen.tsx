@@ -24,7 +24,8 @@ interface TagInput {
   number: string;
 }
 
-export default function AddCowScreen({ navigation }: any) {
+export default function AddCowScreen({ navigation, route }: any) {
+  const ranchId = route.params?.ranchId;
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<CowStatus>('wet');
   const [breed, setBreed] = useState('');
@@ -39,7 +40,7 @@ export default function AddCowScreen({ navigation }: any) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    getAllPastures().then(setPastures);
+    getAllPastures(ranchId).then(setPastures);
   }, []);
 
   const addTagRow = () => {
@@ -93,7 +94,7 @@ export default function AddCowScreen({ navigation }: any) {
 
   const handleAddPasture = async () => {
     if (!newPastureName.trim()) return;
-    const p = await addPasture(newPastureName.trim());
+    const p = await addPasture(newPastureName.trim(), ranchId);
     setPastures([...pastures, p]);
     setSelectedPasture(p.id);
     setNewPastureName('');
@@ -122,7 +123,7 @@ export default function AddCowScreen({ navigation }: any) {
           label: t.label,
           number: t.number.trim(),
         })),
-      });
+      }, ranchId);
       navigation.goBack();
     } catch (e) {
       Alert.alert('Error', 'Failed to save cow. Try again.');
