@@ -12,16 +12,15 @@ import { useFocusEffect } from '@react-navigation/native';
 import { getAllCows, updateCow, addNote, deleteCow } from '../services/database';
 import { Cow, CowStatus } from '../types';
 
-const STATUSES: CowStatus[] = ['open', 'wet', 'dry', 'bred', 'calf', 'bull', 'steer'];
+const STATUSES: CowStatus[] = ['wet', 'dry', 'bred', 'bull', 'steer', 'cull'];
 
 const STATUS_COLORS: Record<CowStatus, string> = {
   wet: '#4CAF50',
   dry: '#9E9E9E',
   bred: '#FFC107',
-  open: '#2196F3',
-  calf: '#FF9800',
   bull: '#795548',
   steer: '#607D8B',
+  cull: '#D32F2F',
 };
 
 export default function CowDetailScreen({ route, navigation }: any) {
@@ -118,13 +117,28 @@ export default function CowDetailScreen({ route, navigation }: any) {
         </View>
       )}
 
+      {/* Description */}
+      {cow.description ? (
+        <View style={styles.descriptionCard}>
+          <Text style={styles.descriptionText}>{cow.description}</Text>
+        </View>
+      ) : null}
+
       {/* Breed */}
-      {cow.breed && (
+      {cow.breed ? (
         <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>Breed</Text>
           <Text style={styles.infoValue}>{cow.breed}</Text>
         </View>
-      )}
+      ) : null}
+
+      {/* Birth Date */}
+      {cow.birthDate ? (
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Born</Text>
+          <Text style={styles.infoValue}>{cow.birthDate}</Text>
+        </View>
+      ) : null}
 
       {/* Tags */}
       <Text style={styles.sectionTitle}>Tags</Text>
@@ -286,5 +300,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   deleteText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  descriptionCard: {
+    padding: 14,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    marginBottom: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#8B4513',
+  },
+  descriptionText: { fontSize: 16, color: '#333', lineHeight: 22 },
   emptyText: { fontSize: 18, color: '#999', textAlign: 'center', marginTop: 40 },
 });

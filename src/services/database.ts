@@ -1,6 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Cow, CowNote, Tag } from '../types';
-import { v4 as uuidv4 } from 'uuid';
+
+function generateId(): string {
+  return Date.now().toString(36) + Math.random().toString(36).substring(2, 10);
+}
 
 const COWS_KEY = 'ranchbook_cows';
 
@@ -19,7 +22,7 @@ export async function addCow(cow: Omit<Cow, 'id' | 'createdAt' | 'updatedAt' | '
   const cows = await getAllCows();
   const newCow: Cow = {
     ...cow,
-    id: uuidv4(),
+    id: generateId(),
     notes: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -43,7 +46,7 @@ export async function addNote(cowId: string, text: string): Promise<CowNote | nu
   const cow = cows.find(c => c.id === cowId);
   if (!cow) return null;
   const note: CowNote = {
-    id: uuidv4(),
+    id: generateId(),
     text,
     createdAt: new Date().toISOString(),
   };

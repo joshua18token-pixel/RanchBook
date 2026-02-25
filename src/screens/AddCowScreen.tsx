@@ -11,7 +11,7 @@ import {
 import { addCow } from '../services/database';
 import { CowStatus, Tag } from '../types';
 
-const STATUSES: CowStatus[] = ['open', 'wet', 'dry', 'bred', 'calf', 'bull', 'steer'];
+const STATUSES: CowStatus[] = ['wet', 'dry', 'bred', 'bull', 'steer', 'cull'];
 const TAG_LABELS = ['ear tag', 'RFID', 'brand', 'other'];
 
 interface TagInput {
@@ -21,8 +21,10 @@ interface TagInput {
 
 export default function AddCowScreen({ navigation }: any) {
   const [name, setName] = useState('');
-  const [status, setStatus] = useState<CowStatus>('open');
+  const [description, setDescription] = useState('');
+  const [status, setStatus] = useState<CowStatus>('wet');
   const [breed, setBreed] = useState('');
+  const [birthDate, setBirthDate] = useState('');
   const [tags, setTags] = useState<TagInput[]>([{ label: 'ear tag', number: '' }]);
   const [saving, setSaving] = useState(false);
 
@@ -59,10 +61,12 @@ export default function AddCowScreen({ navigation }: any) {
     try {
       await addCow({
         name: name.trim() || undefined,
+        description: description.trim() || undefined,
         status,
         breed: breed.trim() || undefined,
+        birthDate: birthDate.trim() || undefined,
         tags: validTags.map(t => ({
-          id: '',  // will be assigned
+          id: '',
           label: t.label,
           number: t.number.trim(),
         })),
@@ -86,6 +90,18 @@ export default function AddCowScreen({ navigation }: any) {
         value={name}
         onChangeText={setName}
         autoCorrect={false}
+      />
+
+      {/* Description */}
+      <Text style={styles.label}>Description (optional)</Text>
+      <TextInput
+        style={[styles.input, styles.textArea]}
+        placeholder="Any notes about this cow..."
+        placeholderTextColor="#999"
+        value={description}
+        onChangeText={setDescription}
+        multiline
+        numberOfLines={3}
       />
 
       {/* Status */}
@@ -113,6 +129,17 @@ export default function AddCowScreen({ navigation }: any) {
         placeholderTextColor="#999"
         value={breed}
         onChangeText={setBreed}
+        autoCorrect={false}
+      />
+
+      {/* Birth Date */}
+      <Text style={styles.label}>Born (optional)</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="e.g. March 2023, 03/15/2023..."
+        placeholderTextColor="#999"
+        value={birthDate}
+        onChangeText={setBirthDate}
         autoCorrect={false}
       />
 
@@ -176,6 +203,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ddd',
     color: '#333',
+  },
+  textArea: {
+    minHeight: 80,
+    textAlignVertical: 'top',
   },
   statusRow: { flexDirection: 'row', flexWrap: 'wrap' },
   statusButton: {

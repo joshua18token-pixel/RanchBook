@@ -16,10 +16,9 @@ const STATUS_COLORS: Record<CowStatus, string> = {
   wet: '#4CAF50',
   dry: '#9E9E9E',
   bred: '#FFC107',
-  open: '#2196F3',
-  calf: '#FF9800',
   bull: '#795548',
   steer: '#607D8B',
+  cull: '#D32F2F',
 };
 
 export default function HerdListScreen({ navigation }: any) {

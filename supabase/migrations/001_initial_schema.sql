@@ -4,7 +4,8 @@
 CREATE TABLE cows (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT,
-  status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('wet', 'dry', 'bred', 'open', 'calf', 'bull', 'steer')),
+  description TEXT,
+  status TEXT NOT NULL DEFAULT 'wet' CHECK (status IN ('wet', 'dry', 'bred', 'bull', 'steer', 'cull')),
   breed TEXT,
   birth_date DATE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
