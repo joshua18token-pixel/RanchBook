@@ -14,6 +14,12 @@ export interface CowNote {
 
 export type CowStatus = 'wet' | 'dry' | 'bred' | 'bull' | 'steer' | 'cull';
 
+export interface Pasture {
+  id: string;
+  name: string;
+  createdAt: string;
+}
+
 export interface Cow {
   id: string;
   name?: string;           // optional nickname
@@ -23,6 +29,8 @@ export interface Cow {
   breed?: string;
   birthMonth?: number;     // 1-12
   birthYear?: number;      // e.g. 2024
+  pastureId?: string;      // assigned pasture
+  photos?: string[];       // array of local URIs
   notes: CowNote[];
   createdAt: string;
   updatedAt: string;

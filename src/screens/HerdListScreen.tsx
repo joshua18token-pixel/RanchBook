@@ -7,10 +7,12 @@ import {
   TouchableOpacity,
   StyleSheet,
   RefreshControl,
+  Alert,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { getAllCows, searchCows } from '../services/database';
-import { Cow, CowStatus } from '../types';
+import { getAllCows, searchCows, getAllPastures } from '../services/database';
+import { exportToExcelAndEmail } from '../services/export';
+import { Cow, CowStatus, Pasture } from '../types';
 
 const STATUS_COLORS: Record<CowStatus, string> = {
   wet: '#4CAF50',
@@ -36,6 +38,7 @@ export default function HerdListScreen({ navigation }: any) {
   const [cows, setCows] = useState<Cow[]>([]);
   const [query, setQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [pastures, setPastures] = useState<Pasture[]>([]);
 
   const loadCows = useCallback(async () => {
     if (!query.trim()) {
@@ -58,8 +61,19 @@ export default function HerdListScreen({ navigation }: any) {
   useFocusEffect(
     useCallback(() => {
       loadCows();
+      getAllPastures().then(setPastures);
     }, [loadCows])
   );
+
+  const handleExport = async () => {
+    try {
+      const allCows = await getAllCows();
+      const allPastures = await getAllPastures();
+      await exportToExcelAndEmail(allCows, allPastures);
+    } catch (e: any) {
+      Alert.alert('Export Error', e.message || 'Failed to export');
+    }
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -72,7 +86,9 @@ export default function HerdListScreen({ navigation }: any) {
     return 'No Tag';
   };
 
-  const renderCow = ({ item }: { item: Cow }) => (
+  const renderCow = ({ item }: { item: Cow }) => {
+    const cowPasture = pastures.find(p => p.id === item.pastureId);
+    return (
     <TouchableOpacity
       style={styles.cowRow}
       onPress={() => navigation.navigate('CowDetail', { cowId: item.id })}
@@ -81,6 +97,7 @@ export default function HerdListScreen({ navigation }: any) {
       <View style={styles.cowInfo}>
         <Text style={styles.tagNumber}>{getPrimaryTag(item)}</Text>
         {item.name ? <Text style={styles.cowName}>{item.name}</Text> : null}
+        {cowPasture && <Text style={styles.pastureName}>📍 {cowPasture.name}</Text>}
         {item.tags.length > 1 && (
           <Text style={styles.extraTags}>+{item.tags.length - 1} more tags</Text>
         )}
@@ -89,7 +106,8 @@ export default function HerdListScreen({ navigation }: any) {
         <Text style={styles.statusText}>{item.status.toUpperCase()}</Text>
       </View>
     </TouchableOpacity>
-  );
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -120,6 +138,13 @@ export default function HerdListScreen({ navigation }: any) {
         }
         contentContainerStyle={cows.length === 0 ? styles.emptyContainer : undefined}
       />
+      <TouchableOpacity
+        style={styles.exportFab}
+        onPress={handleExport}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.exportFabText}>📊</Text>
+      </TouchableOpacity>
       <TouchableOpacity
         style={styles.fab}
         onPress={() => navigation.navigate('AddCow')}
@@ -161,6 +186,7 @@ const styles = StyleSheet.create({
   cowInfo: { flex: 1 },
   tagNumber: { fontSize: 22, fontWeight: 'bold', color: '#2D5016' },
   cowName: { fontSize: 16, color: '#666', marginTop: 2 },
+  pastureName: { fontSize: 14, color: '#8B4513', marginTop: 2 },
   extraTags: { fontSize: 13, color: '#999', marginTop: 2 },
   statusBadge: {
     paddingHorizontal: 14,
@@ -170,6 +196,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statusText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
+  exportFab: {
+    position: 'absolute',
+    bottom: 30,
+    left: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#8B4513',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  exportFabText: { fontSize: 24 },
   fab: {
     position: 'absolute',
     bottom: 30,
