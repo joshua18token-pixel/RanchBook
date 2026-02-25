@@ -83,6 +83,58 @@ export default function AddCowScreen({ navigation }: any) {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      {/* Tags - most important, at the top */}
+      <Text style={styles.label}>Tags</Text>
+      {tags.map((tag, index) => (
+        <View key={index} style={styles.tagRow}>
+          <TouchableOpacity
+            style={styles.tagLabelButton}
+            onPress={() => cycleLabelType(index)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.tagLabelText}>{tag.label} ▼</Text>
+          </TouchableOpacity>
+          <TextInput
+            style={styles.tagInput}
+            placeholder="Tag number"
+            placeholderTextColor="#999"
+            value={tag.number}
+            onChangeText={(v) => updateTag(index, 'number', v)}
+            autoCorrect={false}
+            autoCapitalize="characters"
+          />
+          {tags.length > 1 && (
+            <TouchableOpacity
+              style={styles.removeTag}
+              onPress={() => removeTag(index)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.removeTagText}>✕</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      ))}
+      <TouchableOpacity style={styles.addTagButton} onPress={addTagRow} activeOpacity={0.7}>
+        <Text style={styles.addTagText}>+ Add Another Tag</Text>
+      </TouchableOpacity>
+
+      {/* Status */}
+      <Text style={styles.label}>Status</Text>
+      <View style={styles.statusRow}>
+        {STATUSES.map((s) => (
+          <TouchableOpacity
+            key={s}
+            style={[styles.statusButton, status === s && styles.statusActive]}
+            onPress={() => setStatus(s)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.statusButtonText, status === s && styles.statusActiveText]}>
+              {s.toUpperCase()}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       {/* Name */}
       <Text style={styles.label}>Name (optional)</Text>
       <TextInput
@@ -105,23 +157,6 @@ export default function AddCowScreen({ navigation }: any) {
         multiline
         numberOfLines={3}
       />
-
-      {/* Status */}
-      <Text style={styles.label}>Status</Text>
-      <View style={styles.statusRow}>
-        {STATUSES.map((s) => (
-          <TouchableOpacity
-            key={s}
-            style={[styles.statusButton, status === s && styles.statusActive]}
-            onPress={() => setStatus(s)}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.statusButtonText, status === s && styles.statusActiveText]}>
-              {s.toUpperCase()}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
 
       {/* Breed */}
       <Text style={styles.label}>Breed (optional)</Text>
@@ -157,41 +192,6 @@ export default function AddCowScreen({ navigation }: any) {
           maxLength={4}
         />
       </View>
-
-      {/* Tags */}
-      <Text style={styles.label}>Tags</Text>
-      {tags.map((tag, index) => (
-        <View key={index} style={styles.tagRow}>
-          <TouchableOpacity
-            style={styles.tagLabelButton}
-            onPress={() => cycleLabelType(index)}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.tagLabelText}>{tag.label} ▼</Text>
-          </TouchableOpacity>
-          <TextInput
-            style={styles.tagInput}
-            placeholder="Tag number"
-            placeholderTextColor="#999"
-            value={tag.number}
-            onChangeText={(v) => updateTag(index, 'number', v)}
-            autoCorrect={false}
-            autoCapitalize="characters"
-          />
-          {tags.length > 1 && (
-            <TouchableOpacity
-              style={styles.removeTag}
-              onPress={() => removeTag(index)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.removeTagText}>✕</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      ))}
-      <TouchableOpacity style={styles.addTagButton} onPress={addTagRow} activeOpacity={0.7}>
-        <Text style={styles.addTagText}>+ Add Another Tag</Text>
-      </TouchableOpacity>
 
       {/* Save */}
       <TouchableOpacity
