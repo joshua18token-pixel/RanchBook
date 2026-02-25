@@ -21,7 +21,8 @@ export interface Cow {
   tags: Tag[];             // multiple tags referencing the same cow
   status: CowStatus;
   breed?: string;
-  birthDate?: string;      // optional birth date
+  birthMonth?: number;     // 1-12
+  birthYear?: number;      // e.g. 2024
   notes: CowNote[];
   createdAt: string;
   updatedAt: string;

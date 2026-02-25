@@ -24,7 +24,8 @@ export default function AddCowScreen({ navigation }: any) {
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<CowStatus>('wet');
   const [breed, setBreed] = useState('');
-  const [birthDate, setBirthDate] = useState('');
+  const [birthMonth, setBirthMonth] = useState('');
+  const [birthYear, setBirthYear] = useState('');
   const [tags, setTags] = useState<TagInput[]>([{ label: 'ear tag', number: '' }]);
   const [saving, setSaving] = useState(false);
 
@@ -64,7 +65,8 @@ export default function AddCowScreen({ navigation }: any) {
         description: description.trim() || undefined,
         status,
         breed: breed.trim() || undefined,
-        birthDate: birthDate.trim() || undefined,
+        birthMonth: birthMonth ? parseInt(birthMonth, 10) : undefined,
+        birthYear: birthYear ? parseInt(birthYear, 10) : undefined,
         tags: validTags.map(t => ({
           id: '',
           label: t.label,
@@ -134,14 +136,27 @@ export default function AddCowScreen({ navigation }: any) {
 
       {/* Birth Date */}
       <Text style={styles.label}>Born (optional)</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="e.g. March 2023, 03/15/2023..."
-        placeholderTextColor="#999"
-        value={birthDate}
-        onChangeText={setBirthDate}
-        autoCorrect={false}
-      />
+      <View style={styles.birthRow}>
+        <TextInput
+          style={[styles.input, styles.birthInput]}
+          placeholder="MM"
+          placeholderTextColor="#999"
+          value={birthMonth}
+          onChangeText={(v) => setBirthMonth(v.replace(/[^0-9]/g, '').slice(0, 2))}
+          keyboardType="number-pad"
+          maxLength={2}
+        />
+        <Text style={styles.birthSeparator}>/</Text>
+        <TextInput
+          style={[styles.input, styles.birthInput]}
+          placeholder="YYYY"
+          placeholderTextColor="#999"
+          value={birthYear}
+          onChangeText={(v) => setBirthYear(v.replace(/[^0-9]/g, '').slice(0, 4))}
+          keyboardType="number-pad"
+          maxLength={4}
+        />
+      </View>
 
       {/* Tags */}
       <Text style={styles.label}>Tags</Text>
@@ -266,6 +281,19 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   addTagText: { fontSize: 16, color: '#2D5016', fontWeight: '600' },
+  birthRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  birthInput: {
+    width: 80,
+    textAlign: 'center',
+  },
+  birthSeparator: {
+    fontSize: 24,
+    color: '#666',
+    marginHorizontal: 8,
+  },
   saveButton: {
     marginTop: 24,
     padding: 18,

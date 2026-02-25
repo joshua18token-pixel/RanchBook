@@ -133,10 +133,10 @@ export default function CowDetailScreen({ route, navigation }: any) {
       ) : null}
 
       {/* Birth Date */}
-      {cow.birthDate ? (
+      {cow.birthMonth && cow.birthYear ? (
         <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>Born</Text>
-          <Text style={styles.infoValue}>{cow.birthDate}</Text>
+          <Text style={styles.infoValue}>{String(cow.birthMonth).padStart(2, '0')}/{cow.birthYear}</Text>
         </View>
       ) : null}
 

@@ -21,14 +21,38 @@ const STATUS_COLORS: Record<CowStatus, string> = {
   cull: '#D32F2F',
 };
 
+function parseDateRange(query: string): { from: number; to: number } | null {
+  // Match patterns like "02/2024-06/2025" or "02/2024 - 06/2025"
+  const match = query.match(/^(\d{1,2})\/(\d{4})\s*[-–]\s*(\d{1,2})\/(\d{4})$/);
+  if (!match) return null;
+  const fromMonth = parseInt(match[1], 10);
+  const fromYear = parseInt(match[2], 10);
+  const toMonth = parseInt(match[3], 10);
+  const toYear = parseInt(match[4], 10);
+  return { from: fromYear * 100 + fromMonth, to: toYear * 100 + toMonth };
+}
+
 export default function HerdListScreen({ navigation }: any) {
   const [cows, setCows] = useState<Cow[]>([]);
   const [query, setQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
   const loadCows = useCallback(async () => {
-    const data = query.trim() ? await searchCows(query) : await getAllCows();
-    setCows(data);
+    if (!query.trim()) {
+      setCows(await getAllCows());
+      return;
+    }
+    const range = parseDateRange(query.trim());
+    if (range) {
+      const all = await getAllCows();
+      setCows(all.filter(cow => {
+        if (!cow.birthMonth || !cow.birthYear) return false;
+        const cowDate = cow.birthYear * 100 + cow.birthMonth;
+        return cowDate >= range.from && cowDate <= range.to;
+      }));
+    } else {
+      setCows(await searchCows(query));
+    }
   }, [query]);
 
   useFocusEffect(
@@ -71,7 +95,7 @@ export default function HerdListScreen({ navigation }: any) {
     <View style={styles.container}>
       <TextInput
         style={styles.searchBar}
-        placeholder="Search by tag, name, or status..."
+        placeholder="Search tag, name, or 02/2024-06/2025..."
         placeholderTextColor="#999"
         value={query}
         onChangeText={(text) => {

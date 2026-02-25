@@ -64,6 +64,7 @@ export async function searchCows(query: string): Promise<Cow[]> {
     cow.tags.some(tag => tag.number.toLowerCase().includes(q)) ||
     cow.status.toLowerCase().includes(q) ||
     cow.breed?.toLowerCase().includes(q) ||
+    cow.description?.toLowerCase().includes(q) ||
     cow.notes.some(note => note.text.toLowerCase().includes(q))
   );
 }
