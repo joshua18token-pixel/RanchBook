@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     color: '#333',
   },
-  statusRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  statusRow: { flexDirection: 'row', flexWrap: 'wrap' },
   statusButton: {
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -186,6 +186,7 @@ const styles = StyleSheet.create({
     minWidth: 70,
     alignItems: 'center',
     marginBottom: 4,
+    marginRight: 8,
   },
   statusActive: { backgroundColor: '#2D5016' },
   statusButtonText: { fontSize: 14, fontWeight: 'bold', color: '#666' },
@@ -194,7 +195,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
-    gap: 8,
   },
   tagLabelButton: {
     backgroundColor: '#8B4513',
@@ -202,6 +202,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 8,
     minWidth: 90,
+    marginRight: 8,
   },
   tagLabelText: { color: '#fff', fontSize: 14, fontWeight: '600' },
   tagInput: {
@@ -215,6 +216,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   removeTag: {
+    marginLeft: 8,
     width: 44,
     height: 44,
     borderRadius: 22,
