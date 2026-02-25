@@ -3,6 +3,16 @@ import * as MailComposer from 'expo-mail-composer';
 import * as XLSX from 'xlsx';
 import { Cow, Pasture } from '../types';
 
+// Base64 encode helper for React Native (no btoa for Uint8Array)
+function uint8ToBase64(u8: Uint8Array): string {
+  const CHUNK = 0x8000;
+  const parts: string[] = [];
+  for (let i = 0; i < u8.length; i += CHUNK) {
+    parts.push(String.fromCharCode.apply(null, Array.from(u8.subarray(i, i + CHUNK))));
+  }
+  return btoa(parts.join(''));
+}
+
 export async function exportToExcelAndEmail(cows: Cow[], pastures: Pasture[]) {
   const rows = cows.map(cow => {
     const pasture = pastures.find(p => p.id === cow.pastureId);
@@ -32,33 +42,20 @@ export async function exportToExcelAndEmail(cows: Cow[], pastures: Pasture[]) {
     { wch: 40 }, { wch: 8 }, { wch: 12 },
   ];
 
-  // Write to base64 then to a temp file using React Native's fetch/blob approach
-  const wbout = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
-  const fileName = `RanchBook_Herd_${new Date().toISOString().split('T')[0]}.xlsx`;
-  
-  // Use a blob + FileReader approach that works in Expo
-  const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-  
-  // Convert blob to base64 via FileReader
-  const base64 = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = reader.result as string;
-      resolve(result.split(',')[1]); // strip data:...;base64, prefix
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
+  // Write workbook to Uint8Array, then base64
+  const wbout: Uint8Array = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+  const base64 = uint8ToBase64(new Uint8Array(wbout));
 
-  // Write using expo-file-system legacy API via require
+  const fileName = `RanchBook_Herd_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+  // Write file using expo-file-system
   const ExpoFS = require('expo-file-system');
   const cacheDir = ExpoFS.cacheDirectory || ExpoFS.default?.cacheDirectory;
   const filePath = cacheDir + fileName;
-  
   const writeAsync = ExpoFS.writeAsStringAsync || ExpoFS.default?.writeAsStringAsync;
-  const encoding = ExpoFS.EncodingType?.Base64 || ExpoFS.default?.EncodingType?.Base64 || 'base64';
-  
-  await writeAsync(filePath, base64, { encoding });
+  const EncodingType = ExpoFS.EncodingType || ExpoFS.default?.EncodingType;
+
+  await writeAsync(filePath, base64, { encoding: EncodingType?.Base64 || 'base64' });
 
   // Try email, fall back to share sheet
   const isMailAvailable = await MailComposer.isAvailableAsync();
