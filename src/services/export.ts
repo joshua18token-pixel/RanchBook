@@ -4,13 +4,11 @@ import * as XLSX from 'xlsx';
 import { Cow, Pasture } from '../types';
 
 export async function exportToExcelAndEmail(cows: Cow[], pastures: Pasture[]) {
-  // Build rows
   const rows = cows.map(cow => {
     const pasture = pastures.find(p => p.id === cow.pastureId);
     return {
       'Primary Tag': cow.tags[0]?.number || '',
       'All Tags': cow.tags.map(t => `${t.label}: ${t.number}`).join(', '),
-      'Name': cow.name || '',
       'Status': cow.status.toUpperCase(),
       'Breed': cow.breed || '',
       'Born': cow.birthMonth && cow.birthYear
@@ -24,36 +22,45 @@ export async function exportToExcelAndEmail(cows: Cow[], pastures: Pasture[]) {
     };
   });
 
-  // Create workbook
   const ws = XLSX.utils.json_to_sheet(rows);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Herd');
 
   ws['!cols'] = [
-    { wch: 15 }, { wch: 30 }, { wch: 15 }, { wch: 10 },
+    { wch: 15 }, { wch: 30 }, { wch: 10 },
     { wch: 15 }, { wch: 10 }, { wch: 15 }, { wch: 30 },
     { wch: 40 }, { wch: 8 }, { wch: 12 },
   ];
 
-  // Write to base64
-  const wbout = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
-
-  // Write file using the new expo-file-system API
-  const { File, Paths } = require('expo-file-system/next');
+  // Write to base64 then to a temp file using React Native's fetch/blob approach
+  const wbout = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
   const fileName = `RanchBook_Herd_${new Date().toISOString().split('T')[0]}.xlsx`;
-  const filePath = Paths.cache + '/' + fileName;
   
-  // Convert base64 to Uint8Array
-  const binaryString = atob(wbout);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
+  // Use a blob + FileReader approach that works in Expo
+  const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   
-  const file = new File(filePath);
-  file.write(bytes);
+  // Convert blob to base64 via FileReader
+  const base64 = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      resolve(result.split(',')[1]); // strip data:...;base64, prefix
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
 
-  // Try email first, fall back to share sheet
+  // Write using expo-file-system legacy API via require
+  const ExpoFS = require('expo-file-system');
+  const cacheDir = ExpoFS.cacheDirectory || ExpoFS.default?.cacheDirectory;
+  const filePath = cacheDir + fileName;
+  
+  const writeAsync = ExpoFS.writeAsStringAsync || ExpoFS.default?.writeAsStringAsync;
+  const encoding = ExpoFS.EncodingType?.Base64 || ExpoFS.default?.EncodingType?.Base64 || 'base64';
+  
+  await writeAsync(filePath, base64, { encoding });
+
+  // Try email, fall back to share sheet
   const isMailAvailable = await MailComposer.isAvailableAsync();
   if (isMailAvailable) {
     await MailComposer.composeAsync({
@@ -62,7 +69,6 @@ export async function exportToExcelAndEmail(cows: Cow[], pastures: Pasture[]) {
       attachments: [filePath],
     });
   } else {
-    // Fall back to share sheet (works on all devices)
     await Sharing.shareAsync(filePath, {
       mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       dialogTitle: 'Share Herd Export',

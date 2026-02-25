@@ -96,7 +96,6 @@ export default function HerdListScreen({ navigation }: any) {
     >
       <View style={styles.cowInfo}>
         <Text style={styles.tagNumber}>{getPrimaryTag(item)}</Text>
-        {item.name ? <Text style={styles.cowName}>{item.name}</Text> : null}
         {cowPasture && <Text style={styles.pastureName}>📍 {cowPasture.name}</Text>}
         {item.tags.length > 1 && (
           <Text style={styles.extraTags}>+{item.tags.length - 1} more tags</Text>
@@ -113,7 +112,7 @@ export default function HerdListScreen({ navigation }: any) {
     <View style={styles.container}>
       <TextInput
         style={styles.searchBar}
-        placeholder="Search tag, name, or 02/2024-06/2025..."
+        placeholder="Search tag, pasture, or 02/2024-06/2025..."
         placeholderTextColor="#999"
         value={query}
         onChangeText={(text) => {

@@ -14,6 +14,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect } from '@react-navigation/native';
 import { getAllCows, updateCow, addNote, deleteCow, getAllPastures, addPasture } from '../services/database';
+import PhotoViewer from '../components/PhotoViewer';
 import { Cow, CowStatus, Pasture } from '../types';
 
 const STATUSES: CowStatus[] = ['wet', 'dry', 'bred', 'bull', 'steer', 'cull'];
@@ -40,7 +41,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
 
   // Editable fields
   const [editingField, setEditingField] = useState<string | null>(null);
-  const [editName, setEditName] = useState('');
+
   const [editDescription, setEditDescription] = useState('');
   const [editBreed, setEditBreed] = useState('');
   const [editBirthMonth, setEditBirthMonth] = useState('');
@@ -51,7 +52,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
     const found = all.find(c => c.id === cowId);
     setCow(found || null);
     if (found) {
-      setEditName(found.name || '');
+
       setEditDescription(found.description || '');
       setEditBreed(found.breed || '');
       setEditBirthMonth(found.birthMonth ? String(found.birthMonth) : '');
@@ -73,7 +74,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
     if (!cow) return;
     const updates: Partial<Cow> = {};
     switch (field) {
-      case 'name': updates.name = editName.trim() || undefined; break;
+
       case 'description': updates.description = editDescription.trim() || undefined; break;
       case 'breed': updates.breed = editBreed.trim() || undefined; break;
       case 'born':
@@ -217,27 +218,9 @@ export default function CowDetailScreen({ route, navigation }: any) {
       keyboardVerticalOffset={100}
     >
       <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        {/* Header with name + status */}
+        {/* Header with primary tag + status */}
         <View style={styles.header}>
-          {editingField === 'name' ? (
-            <View style={styles.editRow}>
-              <TextInput
-                style={[styles.editInput, { flex: 1 }]}
-                value={editName}
-                onChangeText={setEditName}
-                placeholder="Name..."
-                placeholderTextColor="#999"
-                autoFocus
-              />
-              <TouchableOpacity style={styles.editSave} onPress={() => saveField('name')}>
-                <Text style={styles.editSaveText}>✓</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <TouchableOpacity onPress={() => setEditingField('name')} style={styles.flex}>
-              <Text style={styles.cowName}>{cow.name || 'Tap to add name'}</Text>
-            </TouchableOpacity>
-          )}
+          <Text style={styles.cowName}>{cow.tags[0]?.number || 'No Tag'}</Text>
           <TouchableOpacity
             style={[styles.statusBadgeLarge, { backgroundColor: STATUS_COLORS[cow.status] }]}
             onPress={() => setShowStatusPicker(!showStatusPicker)}
@@ -431,24 +414,12 @@ export default function CowDetailScreen({ route, navigation }: any) {
 
         {/* Photos */}
         <Text style={styles.sectionTitle}>Photos ({(cow.photos || []).length})</Text>
-        <View style={styles.photoGrid}>
-          {(cow.photos || []).map((uri, i) => (
-            <TouchableOpacity key={i} onPress={() => removePhoto(i)} activeOpacity={0.7}>
-              <Image source={{ uri }} style={styles.photo} />
-              <View style={styles.photoRemoveBadge}>
-                <Text style={styles.photoRemoveText}>✕</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <View style={styles.photoButtons}>
-          <TouchableOpacity style={styles.photoBtn} onPress={takePhoto} activeOpacity={0.7}>
-            <Text style={styles.photoBtnText}>📷 Take Photo</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.photoBtn} onPress={pickPhoto} activeOpacity={0.7}>
-            <Text style={styles.photoBtnText}>🖼️ Gallery</Text>
-          </TouchableOpacity>
-        </View>
+        <PhotoViewer
+          photos={cow.photos || []}
+          onDelete={removePhoto}
+          onAdd={pickPhoto}
+          onCamera={takePhoto}
+        />
 
         {/* Notes */}
         <Text style={styles.sectionTitle}>Notes ({cow.notes.length})</Text>

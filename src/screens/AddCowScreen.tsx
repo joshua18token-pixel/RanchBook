@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { addCow, getAllPastures, addPasture } from '../services/database';
+import PhotoViewer from '../components/PhotoViewer';
 import { CowStatus, Pasture } from '../types';
 
 const STATUSES: CowStatus[] = ['wet', 'dry', 'bred', 'bull', 'steer', 'cull'];
@@ -24,7 +25,6 @@ interface TagInput {
 }
 
 export default function AddCowScreen({ navigation }: any) {
-  const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<CowStatus>('wet');
   const [breed, setBreed] = useState('');
@@ -110,7 +110,6 @@ export default function AddCowScreen({ navigation }: any) {
     setSaving(true);
     try {
       await addCow({
-        name: name.trim() || undefined,
         description: description.trim() || undefined,
         status,
         breed: breed.trim() || undefined,
@@ -237,17 +236,6 @@ export default function AddCowScreen({ navigation }: any) {
           </View>
         )}
 
-        {/* Name */}
-        <Text style={styles.label}>Name (optional)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g. Bessie, Old Red..."
-          placeholderTextColor="#999"
-          value={name}
-          onChangeText={setName}
-          autoCorrect={false}
-        />
-
         {/* Description */}
         <Text style={styles.label}>Description (optional)</Text>
         <TextInput
@@ -297,24 +285,12 @@ export default function AddCowScreen({ navigation }: any) {
 
         {/* Photos */}
         <Text style={styles.label}>Photos (optional)</Text>
-        <View style={styles.photoRow}>
-          {photos.map((uri, i) => (
-            <TouchableOpacity key={i} onPress={() => removePhoto(i)} activeOpacity={0.7}>
-              <Image source={{ uri }} style={styles.photoThumb} />
-              <View style={styles.photoRemove}>
-                <Text style={styles.photoRemoveText}>✕</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <View style={styles.photoButtons}>
-          <TouchableOpacity style={styles.photoButton} onPress={takePhoto} activeOpacity={0.7}>
-            <Text style={styles.photoButtonText}>📷 Take Photo</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.photoButton} onPress={pickPhoto} activeOpacity={0.7}>
-            <Text style={styles.photoButtonText}>🖼️ From Gallery</Text>
-          </TouchableOpacity>
-        </View>
+        <PhotoViewer
+          photos={photos}
+          onDelete={removePhoto}
+          onAdd={pickPhoto}
+          onCamera={takePhoto}
+        />
 
         {/* Save */}
         <TouchableOpacity
