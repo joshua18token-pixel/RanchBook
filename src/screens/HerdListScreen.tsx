@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -37,6 +37,29 @@ function parseDateRange(query: string): { from: number; to: number } | null {
 export default function HerdListScreen({ navigation, route }: any) {
   const ranchId = route.params?.ranchId;
   const myRole = route.params?.myRole;
+  const ranchName = route.params?.ranchName || 'Ranch';
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerTitle: () => (
+        <View style={{ alignItems: 'center' }}>
+          <Text style={{ color: '#fff', fontSize: 20, fontWeight: 'bold' }}>{ranchName}</Text>
+          <Text style={{ color: '#ccc', fontSize: 11 }}>RanchBook</Text>
+        </View>
+      ),
+      headerLeft: () => (
+        <TouchableOpacity
+          onPress={() => {
+            const onSwitch = route.params?.onSwitchRanch;
+            if (onSwitch) onSwitch();
+          }}
+          style={{ paddingRight: 12 }}
+        >
+          <Text style={{ color: '#fff', fontSize: 14 }}>← Ranches</Text>
+        </TouchableOpacity>
+      ),
+    });
+  }, [ranchName]);
   const [cows, setCows] = useState<Cow[]>([]);
   const [query, setQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
@@ -131,7 +154,7 @@ export default function HerdListScreen({ navigation, route }: any) {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>🐄</Text>
+            <Text style={styles.emptyIcon}>🐂</Text>
             <Text style={styles.emptyText}>
               {query ? 'No cows match your search' : 'No cows yet — tap + to add one'}
             </Text>

@@ -20,10 +20,10 @@ type AppState = 'loading' | 'login' | 'ranch_select' | 'app';
 export default function App() {
   const [appState, setAppState] = useState<AppState>('loading');
   const [ranchId, setRanchId] = useState<string | null>(null);
+  const [ranchName, setRanchName] = useState<string>('');
   const [myRole, setMyRole] = useState<string>('read');
 
   useEffect(() => {
-    // Check existing session
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) {
         setAppState('ranch_select');
@@ -32,7 +32,6 @@ export default function App() {
       }
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
         setAppState('login');
@@ -43,24 +42,19 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  if (appState === 'loading') {
-    return null; // Could add a splash screen
-  }
+  if (appState === 'loading') return null;
 
   if (appState === 'login') {
-    return (
-      <LoginScreen
-        onLogin={() => setAppState('ranch_select')}
-      />
-    );
+    return <LoginScreen onLogin={() => setAppState('ranch_select')} />;
   }
 
   if (appState === 'ranch_select') {
     return (
       <RanchSetupScreen
-        onRanchSelected={(id, role) => {
+        onRanchSelected={(id, role, name) => {
           setRanchId(id);
           setMyRole(role);
+          setRanchName(name || 'Ranch');
           setAppState('app');
         }}
         onLogout={() => setAppState('login')}
@@ -76,8 +70,8 @@ export default function App() {
         <Stack.Screen
           name="HerdList"
           component={HerdListScreen}
-          options={{ title: '🐄 RanchBook' }}
-          initialParams={{ ranchId, myRole }}
+          options={{ title: '🐂 RanchBook' }}
+          initialParams={{ ranchId, myRole, ranchName, onSwitchRanch: () => setAppState('ranch_select') }}
         />
         <Stack.Screen
           name="AddCow"

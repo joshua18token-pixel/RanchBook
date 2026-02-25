@@ -56,7 +56,7 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.logo}>🐄</Text>
+        <Text style={styles.logo}>🐂</Text>
         <Text style={styles.title}>RanchBook</Text>
         <Text style={styles.subtitle}>
           {isSignUp ? 'Create your account' : 'Sign in to your ranch'}

@@ -11,7 +11,7 @@ import {
 import { createRanch, getMyRanches, acceptInvite, getPendingInvites, signOut } from '../services/auth';
 
 interface Props {
-  onRanchSelected: (ranchId: string, role: string) => void;
+  onRanchSelected: (ranchId: string, role: string, name?: string) => void;
   onLogout: () => void;
 }
 
@@ -43,7 +43,7 @@ export default function RanchSetupScreen({ onRanchSelected, onLogout }: Props) {
     setCreating(true);
     try {
       const ranch = await createRanch(ranchName.trim());
-      onRanchSelected(ranch.id, 'manager');
+      onRanchSelected(ranch.id, 'manager', ranch.name);
     } catch (e: any) {
       Alert.alert('Error', e.message || 'Failed to create ranch');
     } finally {
@@ -54,7 +54,7 @@ export default function RanchSetupScreen({ onRanchSelected, onLogout }: Props) {
   const handleAcceptInvite = async (invite: any) => {
     try {
       await acceptInvite(invite.ranch_id);
-      onRanchSelected(invite.ranch_id, invite.role);
+      onRanchSelected(invite.ranch_id, invite.role, (invite.ranches as any)?.name);
     } catch (e: any) {
       Alert.alert('Error', e.message || 'Failed to accept invite');
     }
@@ -67,7 +67,7 @@ export default function RanchSetupScreen({ onRanchSelected, onLogout }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.logo}>🐄</Text>
+      <Text style={styles.logo}>🐂</Text>
       <Text style={styles.title}>Your Ranches</Text>
 
       {/* Existing ranches */}
@@ -77,7 +77,7 @@ export default function RanchSetupScreen({ onRanchSelected, onLogout }: Props) {
             <TouchableOpacity
               key={item.ranch_id}
               style={styles.ranchCard}
-              onPress={() => onRanchSelected(item.ranch_id, item.role)}
+              onPress={() => onRanchSelected(item.ranch_id, item.role, (item.ranches as any)?.name)}
               activeOpacity={0.7}
             >
               <Text style={styles.ranchName}>{(item.ranches as any)?.name || 'Ranch'}</Text>

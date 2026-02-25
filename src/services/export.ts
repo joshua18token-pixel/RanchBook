@@ -1,7 +1,7 @@
 import * as Sharing from 'expo-sharing';
 import * as MailComposer from 'expo-mail-composer';
 import * as XLSX from 'xlsx';
-import { File, Paths } from 'expo-file-system/next';
+import { Platform } from 'react-native';
 import { Cow, Pasture } from '../types';
 
 export async function exportToExcelAndEmail(cows: Cow[], pastures: Pasture[]) {
@@ -33,18 +33,32 @@ export async function exportToExcelAndEmail(cows: Cow[], pastures: Pasture[]) {
     { wch: 40 }, { wch: 8 }, { wch: 12 },
   ];
 
-  // Write workbook to Uint8Array
+  const fileName = `RanchBook_Herd_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+  if (Platform.OS === 'web') {
+    // Web: trigger browser download
+    const wbout = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+    const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    return;
+  }
+
+  // Mobile: write file and share/email
   const wbout = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
   const bytes = new Uint8Array(wbout);
 
-  const fileName = `RanchBook_Herd_${new Date().toISOString().split('T')[0]}.xlsx`;
+  const { File, Paths } = require('expo-file-system/next');
   const file = new File(Paths.cache, fileName);
-  
   file.write(bytes);
-
   const filePath = file.uri;
 
-  // Try email, fall back to share sheet
   const isMailAvailable = await MailComposer.isAvailableAsync();
   if (isMailAvailable) {
     await MailComposer.composeAsync({
