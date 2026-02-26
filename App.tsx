@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, createContext, useContext } from 'react';
 import { Platform, TouchableOpacity, Text } from 'react-native';
 import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
+// Context for app-level actions that survive navigation
+export const AppContext = createContext<{ switchToRanchSelect: () => void }>({ switchToRanchSelect: () => {} });
 import { supabase } from './src/services/supabase';
 import LoginScreen from './src/screens/LoginScreen';
 import RanchSetupScreen from './src/screens/RanchSetupScreen';
@@ -76,6 +79,7 @@ export default function App() {
   };
 
   return (
+    <AppContext.Provider value={{ switchToRanchSelect: () => setAppState('ranch_select') }}>
     <NavigationContainer linking={linking} documentTitle={{ formatter: (options) => options?.title ? `${options.title} | RanchBook` : 'RanchBook' }}>
       <Stack.Navigator
         screenOptions={{ headerStyle, headerTintColor, headerTitleStyle }}
@@ -84,7 +88,7 @@ export default function App() {
           name="HerdList"
           component={HerdListScreen}
           options={{ title: '🐂 RanchBook' }}
-          initialParams={{ ranchId, myRole, ranchName, onSwitchRanch: () => setAppState('ranch_select') }}
+          initialParams={{ ranchId, myRole, ranchName }}
         />
         <Stack.Screen
           name="AddCow"
@@ -127,5 +131,6 @@ export default function App() {
         />
       </Stack.Navigator>
     </NavigationContainer>
+    </AppContext.Provider>
   );
 }

@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useContext } from 'react';
+import { AppContext } from '../../App';
 import {
   View,
   Text,
@@ -35,6 +36,7 @@ function parseDateRange(query: string): { from: number; to: number } | null {
 }
 
 export default function HerdListScreen({ navigation, route }: any) {
+  const { switchToRanchSelect } = useContext(AppContext);
   const ranchId = route.params?.ranchId;
   const myRole = route.params?.myRole;
   const ranchName = route.params?.ranchName || 'Ranch';
@@ -49,10 +51,7 @@ export default function HerdListScreen({ navigation, route }: any) {
       ),
       headerLeft: () => (
         <TouchableOpacity
-          onPress={() => {
-            const onSwitch = route.params?.onSwitchRanch;
-            if (onSwitch) onSwitch();
-          }}
+          onPress={() => switchToRanchSelect()}
           style={{ paddingRight: 12 }}
         >
           <Text style={{ color: '#fff', fontSize: 14 }}>← Ranches</Text>
