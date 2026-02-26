@@ -240,20 +240,29 @@ export default function CowDetailScreen({ route, navigation }: any) {
     }
   };
 
-  const handleDelete = () => {
-    Alert.alert('Delete Cow', 'Are you sure? This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          if (cow) {
-            await deleteCow(cow.id);
-            navigation.goBack();
-          }
+  const handleDelete = async () => {
+    if (Platform.OS === 'web') {
+      if (window.confirm('Delete this cow? This cannot be undone.')) {
+        if (cow) {
+          await deleteCow(cow.id);
+          navigation.goBack();
+        }
+      }
+    } else {
+      Alert.alert('Delete Cow', 'Are you sure? This cannot be undone.', [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            if (cow) {
+              await deleteCow(cow.id);
+              navigation.goBack();
+            }
+          },
         },
-      },
-    ]);
+      ]);
+    }
   };
 
   if (!cow) {
