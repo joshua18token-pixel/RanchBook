@@ -121,12 +121,12 @@ export async function updateCow(id: string, updates: Partial<Cow>, ranchId?: str
 
   if (updates.description !== undefined) dbUpdates.description = updates.description || null;
   if (updates.status !== undefined) dbUpdates.status = updates.status;
-  if (updates.breed !== undefined) dbUpdates.breed = updates.breed || null;
+  if ('breed' in updates) dbUpdates.breed = updates.breed || null;
   if (updates.birthMonth !== undefined) dbUpdates.birth_month = updates.birthMonth || null;
   if (updates.birthYear !== undefined) dbUpdates.birth_year = updates.birthYear || null;
-  if (updates.pastureId !== undefined) dbUpdates.pasture_id = updates.pastureId ? updates.pastureId : null;
+  if ('pastureId' in updates) dbUpdates.pasture_id = updates.pastureId || null;
   if (updates.photos !== undefined) dbUpdates.photos = updates.photos || null;
-  if (updates.motherTag !== undefined) dbUpdates.mother_tag = updates.motherTag || null;
+  if ('motherTag' in updates) dbUpdates.mother_tag = updates.motherTag || null;
 
   const { error } = await supabase.from('cows').update(dbUpdates).eq('id', id);
   if (error) throw error;
@@ -249,6 +249,33 @@ export async function getCalves(tagNumbers: string[], ranchId: string): Promise<
   const all = await getAllCows(ranchId);
   const calfIds = new Set(cowRows.map(c => c.id));
   return all.filter(c => calfIds.has(c.id));
+}
+
+// ── Ranch Breeds ──
+
+export async function getRanchBreeds(ranchId: string): Promise<{ id: string; name: string }[]> {
+  const { data, error } = await supabase
+    .from('ranch_breeds')
+    .select('id, name')
+    .eq('ranch_id', ranchId)
+    .order('name', { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function addRanchBreed(name: string, ranchId: string): Promise<{ id: string; name: string }> {
+  const { data, error } = await supabase
+    .from('ranch_breeds')
+    .insert({ name, ranch_id: ranchId })
+    .select()
+    .single();
+  if (error) throw error;
+  return { id: data.id, name: data.name };
+}
+
+export async function removeRanchBreed(id: string): Promise<void> {
+  const { error } = await supabase.from('ranch_breeds').delete().eq('id', id);
+  if (error) throw error;
 }
 
 // ── Pastures (Supabase) ──

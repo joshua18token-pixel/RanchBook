@@ -13,13 +13,13 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect } from '@react-navigation/native';
-import { getAllCows, updateCow, addNote, deleteCow, getAllPastures, addPasture, getCowByTag, getCalves } from '../services/database';
+import { getAllCows, updateCow, addNote, deleteCow, getAllPastures, addPasture, getCowByTag, getCalves, getRanchBreeds, addRanchBreed, removeRanchBreed } from '../services/database';
 import PhotoViewer from '../components/PhotoViewer';
 import { Cow, CowStatus, Pasture } from '../types';
 
 const STATUSES: CowStatus[] = ['wet', 'dry', 'bred', 'bull', 'steer', 'cull'];
 const TAG_LABELS = ['ear tag', 'RFID', 'brand', 'other'];
-const COMMON_BREEDS = ['Angus', 'Red Angus', 'Hereford', 'Charolais', 'Simmental', 'Brahman', 'Jersey', 'Holstein', 'Limousin', 'Shorthorn'];
+const FALLBACK_BREEDS = ['Angus', 'Red Angus', 'Hereford', 'Charolais', 'Simmental', 'Brahman', 'Jersey', 'Holstein', 'Limousin', 'Shorthorn'];
 
 const STATUS_COLORS: Record<CowStatus, string> = {
   wet: '#4CAF50',
@@ -56,6 +56,9 @@ export default function CowDetailScreen({ route, navigation }: any) {
   const [tagsChanged, setTagsChanged] = useState(false);
   const [savingTags, setSavingTags] = useState(false);
 
+  // Breeds
+  const [ranchBreeds, setRanchBreeds] = useState<{ id: string; name: string }[]>([]);
+
   // Lineage
   const [calves, setCalves] = useState<Cow[]>([]);
 
@@ -82,6 +85,11 @@ export default function CowDetailScreen({ route, navigation }: any) {
 
   useEffect(() => {
     getAllPastures(ranchId).then(setPastures);
+    if (ranchId) {
+      getRanchBreeds(ranchId)
+        .then(setRanchBreeds)
+        .catch(() => setRanchBreeds(FALLBACK_BREEDS.map((b, i) => ({ id: String(i), name: b }))));
+    }
   }, []);
 
   useFocusEffect(
@@ -113,9 +121,9 @@ export default function CowDetailScreen({ route, navigation }: any) {
     loadCow();
   };
 
-  const handlePastureChange = async (pastureId: string | undefined) => {
+  const handlePastureChange = async (pastureId: string | null) => {
     if (!cow) return;
-    await updateCow(cow.id, { pastureId: pastureId || undefined }, ranchId);
+    await updateCow(cow.id, { pastureId: pastureId || '' }, ranchId);
     setShowPasturePicker(false);
     loadCow();
   };
@@ -130,8 +138,31 @@ export default function CowDetailScreen({ route, navigation }: any) {
 
   const handleSetCustomBreed = async () => {
     if (customBreedInput.trim()) {
-      await handleBreedChange(customBreedInput.trim());
+      const name = customBreedInput.trim();
+      // Add to ranch breeds if not already there
+      if (ranchId && !ranchBreeds.find(b => b.name === name)) {
+        try {
+          const newBreed = await addRanchBreed(name, ranchId);
+          setRanchBreeds([...ranchBreeds, newBreed].sort((a, b) => a.name.localeCompare(b.name)));
+        } catch (e) { /* ignore duplicate */ }
+      }
+      await handleBreedChange(name);
       setCustomBreedInput('');
+    }
+  };
+
+  const handleRemoveBreed = async (breedId: string, breedName: string) => {
+    const doRemove = Platform.OS === 'web'
+      ? window.confirm(`Remove "${breedName}" from breed presets?`)
+      : await new Promise<boolean>(resolve => {
+          Alert.alert('Remove Breed', `Remove "${breedName}" from presets?`, [
+            { text: 'Cancel', onPress: () => resolve(false) },
+            { text: 'Remove', style: 'destructive', onPress: () => resolve(true) },
+          ]);
+        });
+    if (doRemove) {
+      await removeRanchBreed(breedId);
+      setRanchBreeds(ranchBreeds.filter(b => b.id !== breedId));
     }
   };
 
@@ -402,7 +433,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
           <View style={styles.pickerRow}>
             <TouchableOpacity
               style={[styles.pickerOption, { backgroundColor: !cow.pastureId ? '#2D5016' : '#9E9E9E' }]}
-              onPress={() => handlePastureChange(undefined)}
+              onPress={() => handlePastureChange(null)}
               activeOpacity={0.7}
             >
               <Text style={styles.pickerOptionText}>None</Text>
@@ -485,15 +516,25 @@ export default function CowDetailScreen({ route, navigation }: any) {
             >
               <Text style={styles.pickerOptionText}>None</Text>
             </TouchableOpacity>
-            {COMMON_BREEDS.map((b) => (
-              <TouchableOpacity
-                key={b}
-                style={[styles.pickerOption, { backgroundColor: cow.breed === b ? '#2D5016' : '#795548' }]}
-                onPress={() => handleBreedChange(b)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.pickerOptionText}>{b}</Text>
-              </TouchableOpacity>
+            {ranchBreeds.map((b) => (
+              <View key={b.id} style={{ flexDirection: 'row', alignItems: 'center', marginRight: 8, marginBottom: 8 }}>
+                <TouchableOpacity
+                  style={[styles.pickerOption, { backgroundColor: cow.breed === b.name ? '#2D5016' : '#795548', marginRight: 0, marginBottom: 0 }]}
+                  onPress={() => handleBreedChange(b.name)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.pickerOptionText}>{b.name}</Text>
+                </TouchableOpacity>
+                {myRole === 'manager' && (
+                  <TouchableOpacity
+                    style={styles.breedRemoveBtn}
+                    onPress={() => handleRemoveBreed(b.id, b.name)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.breedRemoveText}>✕</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             ))}
             <TouchableOpacity
               style={[styles.pickerOption, { backgroundColor: '#fff', borderWidth: 2, borderColor: '#795548' }]}
@@ -501,7 +542,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
               activeOpacity={0.7}
             >
               <Text style={[styles.pickerOptionText, { color: '#795548' }]}>
-                {cow.breed && !COMMON_BREEDS.includes(cow.breed) ? cow.breed : '+ Custom'}
+                {cow.breed && !ranchBreeds.find(rb => rb.name === cow.breed) ? cow.breed : '+ Custom'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -817,6 +858,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   tagCancelBtnText: { color: '#666', fontWeight: 'bold', fontSize: 16 },
+  breedRemoveBtn: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#ff5252',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 2,
+  },
+  breedRemoveText: { color: '#fff', fontSize: 11, fontWeight: 'bold' },
   calfRow: {
     flexDirection: 'row',
     alignItems: 'center',

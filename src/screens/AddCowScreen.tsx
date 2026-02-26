@@ -12,13 +12,13 @@ import {
   Modal,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { addCow, getAllPastures, addPasture } from '../services/database';
+import { addCow, getAllPastures, addPasture, getRanchBreeds, addRanchBreed } from '../services/database';
 import PhotoViewer from '../components/PhotoViewer';
 import { CowStatus, Pasture } from '../types';
 
 const STATUSES: CowStatus[] = ['wet', 'dry', 'bred', 'bull', 'steer', 'cull'];
 const TAG_LABELS = ['ear tag', 'RFID', 'brand', 'other'];
-const COMMON_BREEDS = ['Angus', 'Red Angus', 'Hereford', 'Charolais', 'Simmental', 'Brahman', 'Jersey', 'Holstein', 'Limousin', 'Shorthorn'];
+const FALLBACK_BREEDS = ['Angus', 'Red Angus', 'Hereford', 'Charolais', 'Simmental', 'Brahman', 'Jersey', 'Holstein', 'Limousin', 'Shorthorn'];
 
 interface TagInput {
   label: string;
@@ -43,9 +43,15 @@ export default function AddCowScreen({ navigation, route }: any) {
   const [motherTag, setMotherTag] = useState('');
   const [saving, setSaving] = useState(false);
   const [tagLabelPickerIndex, setTagLabelPickerIndex] = useState<number | null>(null);
+  const [ranchBreeds, setRanchBreeds] = useState<string[]>([]);
 
   useEffect(() => {
     getAllPastures(ranchId).then(setPastures);
+    if (ranchId) {
+      getRanchBreeds(ranchId)
+        .then(breeds => setRanchBreeds(breeds.map(b => b.name)))
+        .catch(() => setRanchBreeds(FALLBACK_BREEDS));
+    }
   }, []);
 
   const addTagRow = () => {
@@ -104,11 +110,19 @@ export default function AddCowScreen({ navigation, route }: any) {
     setShowPastureInput(false);
   };
 
-  const handleSetCustomBreed = () => {
+  const handleSetCustomBreed = async () => {
     if (customBreed.trim()) {
-      setBreed(customBreed.trim());
+      const name = customBreed.trim();
+      setBreed(name);
       setShowCustomBreed(false);
       setCustomBreed('');
+      // Add to ranch breeds if not already there
+      if (ranchId && !ranchBreeds.includes(name)) {
+        try {
+          await addRanchBreed(name, ranchId);
+          setRanchBreeds([...ranchBreeds, name].sort());
+        } catch (e) { /* ignore duplicate */ }
+      }
     }
   };
 
@@ -306,7 +320,7 @@ export default function AddCowScreen({ navigation, route }: any) {
           >
             <Text style={[styles.breedOptionText, !breed && styles.breedActiveText]}>None</Text>
           </TouchableOpacity>
-          {COMMON_BREEDS.map((b) => (
+          {ranchBreeds.map((b) => (
             <TouchableOpacity
               key={b}
               style={[styles.breedOption, breed === b && styles.breedActive]}
@@ -317,12 +331,12 @@ export default function AddCowScreen({ navigation, route }: any) {
             </TouchableOpacity>
           ))}
           <TouchableOpacity
-            style={[styles.addPastureBtn, breed && !COMMON_BREEDS.includes(breed) && styles.breedActive]}
+            style={[styles.addPastureBtn, breed && !ranchBreeds.includes(breed) && styles.breedActive]}
             onPress={() => setShowCustomBreed(!showCustomBreed)}
             activeOpacity={0.7}
           >
-            <Text style={[styles.addPastureBtnText, breed && !COMMON_BREEDS.includes(breed) && styles.breedActiveText]}>
-              {breed && !COMMON_BREEDS.includes(breed) ? breed : '+ Custom'}
+            <Text style={[styles.addPastureBtnText, breed && !ranchBreeds.includes(breed) && styles.breedActiveText]}>
+              {breed && !ranchBreeds.includes(breed) ? breed : '+ Custom'}
             </Text>
           </TouchableOpacity>
         </View>
