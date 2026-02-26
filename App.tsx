@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Platform, TouchableOpacity, Text } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { supabase } from './src/services/supabase';
 import LoginScreen from './src/screens/LoginScreen';
@@ -63,8 +63,20 @@ export default function App() {
     );
   }
 
+  const linking: LinkingOptions<any> = {
+    prefixes: ['https://ranchbook.io', 'http://localhost:8081'],
+    config: {
+      screens: {
+        HerdList: '',
+        AddCow: 'add',
+        CowDetail: 'cow/:cowId',
+        Team: 'team',
+      },
+    },
+  };
+
   return (
-    <NavigationContainer>
+    <NavigationContainer linking={linking} documentTitle={{ formatter: (options) => options?.title ? `${options.title} | RanchBook` : 'RanchBook' }}>
       <Stack.Navigator
         screenOptions={{ headerStyle, headerTintColor, headerTitleStyle }}
       >
