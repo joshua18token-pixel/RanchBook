@@ -40,7 +40,15 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
         onLogin();
       }
     } catch (e: any) {
-      Alert.alert('Error', e.message || 'Something went wrong');
+      let msg = e.message || 'Something went wrong';
+      // Make Supabase errors user-friendly
+      if (msg.includes('Invalid login credentials')) msg = 'Wrong email or password. Please try again.';
+      else if (msg.includes('Email not confirmed')) msg = 'Check your email and click the confirmation link first.';
+      else if (msg.includes('User already registered')) msg = 'An account with this email already exists. Try signing in.';
+      else if (msg.includes('rate_limit') || msg.includes('after')) msg = 'Too many attempts. Please wait a minute and try again.';
+      else if (msg.includes('Password should be')) msg = msg; // Already clear
+      else if (msg.includes('Unable to validate email')) msg = 'Please enter a valid email address.';
+      Alert.alert('Error', msg);
     } finally {
       setLoading(false);
     }

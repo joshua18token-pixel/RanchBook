@@ -14,19 +14,28 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.ranchbook.app"
+      "bundleIdentifier": "com.ranchbook.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-    "package": "com.ranchbook.app",
+      "package": "com.ranchbook.app",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "64cf0699-5a2a-454c-92ec-8bcd373b2c0d"
+      }
+    },
+    "owner": "agkurz"
   }
 }

@@ -45,7 +45,10 @@ export default function RanchSetupScreen({ onRanchSelected, onLogout }: Props) {
       const ranch = await createRanch(ranchName.trim());
       onRanchSelected(ranch.id, 'manager', ranch.name);
     } catch (e: any) {
-      Alert.alert('Error', e.message || 'Failed to create ranch');
+      let msg = e.message || 'Failed to create ranch';
+      if (msg.includes('infinite recursion')) msg = 'Database permission error. Please contact support.';
+      else if (msg.includes('violates')) msg = 'Could not create ranch. Please try again.';
+      Alert.alert('Error', msg);
     } finally {
       setCreating(false);
     }
