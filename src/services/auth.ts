@@ -145,6 +145,26 @@ export async function acceptInvite(ranchId: string) {
   if (error) throw error;
 }
 
+export async function deleteRanch(ranchId: string) {
+  const user = await getCurrentUser();
+  if (!user) throw new Error('Not logged in');
+
+  // Verify ownership
+  const { data: ranch } = await supabase
+    .from('ranches')
+    .select('owner_id')
+    .eq('id', ranchId)
+    .single();
+
+  if (!ranch || ranch.owner_id !== user.id) {
+    throw new Error('Only the ranch owner can delete a ranch');
+  }
+
+  // Delete ranch (cascades to members, cows, tags, notes, pastures, breeds)
+  const { error } = await supabase.from('ranches').delete().eq('id', ranchId);
+  if (error) throw error;
+}
+
 export async function getPendingInvites() {
   const user = await getCurrentUser();
   if (!user) throw new Error('Not logged in');

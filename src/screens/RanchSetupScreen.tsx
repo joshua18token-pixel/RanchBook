@@ -7,8 +7,10 @@ import {
   StyleSheet,
   Alert,
   FlatList,
+  Platform,
+  Modal,
 } from 'react-native';
-import { createRanch, getMyRanches, acceptInvite, getPendingInvites, signOut } from '../services/auth';
+import { createRanch, getMyRanches, acceptInvite, getPendingInvites, signOut, deleteRanch } from '../services/auth';
 
 interface Props {
   onRanchSelected: (ranchId: string, role: string, name?: string) => void;
@@ -20,6 +22,9 @@ export default function RanchSetupScreen({ onRanchSelected, onLogout }: Props) {
   const [ranches, setRanches] = useState<any[]>([]);
   const [invites, setInvites] = useState<any[]>([]);
   const [creating, setCreating] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -63,6 +68,25 @@ export default function RanchSetupScreen({ onRanchSelected, onLogout }: Props) {
     }
   };
 
+  const handleDeleteRanch = async () => {
+    if (!deleteTarget) return;
+    if (deleteConfirmText !== deleteTarget.name) {
+      Alert.alert('Name doesn\'t match', 'Type the exact ranch name to confirm deletion.');
+      return;
+    }
+    setDeleting(true);
+    try {
+      await deleteRanch(deleteTarget.id);
+      setDeleteTarget(null);
+      setDeleteConfirmText('');
+      loadData();
+    } catch (e: any) {
+      Alert.alert('Error', e.message || 'Failed to delete ranch');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const handleLogout = async () => {
     await signOut();
     onLogout();
@@ -76,19 +100,32 @@ export default function RanchSetupScreen({ onRanchSelected, onLogout }: Props) {
       {/* Existing ranches */}
       {ranches.length > 0 && (
         <View style={styles.section}>
-          {ranches.map((item: any) => (
-            <TouchableOpacity
-              key={item.ranch_id}
-              style={styles.ranchCard}
-              onPress={() => onRanchSelected(item.ranch_id, item.role, (item.ranches as any)?.name)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.ranchName}>{(item.ranches as any)?.name || 'Ranch'}</Text>
-              <View style={styles.roleBadge}>
-                <Text style={styles.roleText}>{item.role.toUpperCase()}</Text>
+          {ranches.map((item: any) => {
+            const name = (item.ranches as any)?.name || 'Ranch';
+            return (
+              <View key={item.ranch_id} style={styles.ranchRow}>
+                <TouchableOpacity
+                  style={[styles.ranchCard, { flex: 1 }]}
+                  onPress={() => onRanchSelected(item.ranch_id, item.role, name)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.ranchName}>{name}</Text>
+                  <View style={styles.roleBadge}>
+                    <Text style={styles.roleText}>{item.role.toUpperCase()}</Text>
+                  </View>
+                </TouchableOpacity>
+                {item.role === 'manager' && (
+                  <TouchableOpacity
+                    style={styles.deleteRanchBtn}
+                    onPress={() => { setDeleteTarget({ id: item.ranch_id, name }); setDeleteConfirmText(''); }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.deleteRanchBtnText}>🗑</Text>
+                  </TouchableOpacity>
+                )}
               </View>
-            </TouchableOpacity>
-          ))}
+            );
+          })}
         </View>
       )}
 
@@ -136,6 +173,56 @@ export default function RanchSetupScreen({ onRanchSelected, onLogout }: Props) {
       <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.7}>
         <Text style={styles.logoutText}>Sign Out</Text>
       </TouchableOpacity>
+
+      {/* Delete Ranch Confirmation Modal */}
+      <Modal visible={deleteTarget !== null} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>⚠️ Delete Ranch</Text>
+            <Text style={styles.modalWarning}>
+              This will permanently delete "{deleteTarget?.name}" and ALL its data:
+            </Text>
+            <Text style={styles.modalWarningList}>
+              • All cows and their tags{'\n'}
+              • All photos and notes{'\n'}
+              • All pastures and breed presets{'\n'}
+              • All team member access
+            </Text>
+            <Text style={styles.modalWarning}>This cannot be undone.</Text>
+            <Text style={styles.modalConfirmLabel}>
+              Type "{deleteTarget?.name}" to confirm:
+            </Text>
+            <TextInput
+              style={styles.modalInput}
+              value={deleteConfirmText}
+              onChangeText={setDeleteConfirmText}
+              placeholder="Ranch name..."
+              placeholderTextColor="#999"
+              autoCorrect={false}
+            />
+            <TouchableOpacity
+              style={[
+                styles.modalDeleteBtn,
+                deleteConfirmText !== deleteTarget?.name && styles.modalDeleteDisabled,
+              ]}
+              onPress={handleDeleteRanch}
+              disabled={deleteConfirmText !== deleteTarget?.name || deleting}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.modalDeleteText}>
+                {deleting ? 'DELETING...' : 'DELETE RANCH FOREVER'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.modalCancelBtn}
+              onPress={() => { setDeleteTarget(null); setDeleteConfirmText(''); }}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -153,7 +240,6 @@ const styles = StyleSheet.create({
     padding: 18,
     backgroundColor: '#fff',
     borderRadius: 12,
-    marginBottom: 8,
     borderLeftWidth: 4,
     borderLeftColor: '#2D5016',
   },
@@ -190,4 +276,81 @@ const styles = StyleSheet.create({
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   logoutBtn: { alignItems: 'center', marginTop: 20 },
   logoutText: { color: '#ff5252', fontSize: 16 },
+  ranchRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  deleteRanchBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    backgroundColor: '#ff5252',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
+  },
+  deleteRanchBtnText: { fontSize: 20 },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContent: {
+    backgroundColor: '#FFF8E7',
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#D32F2F',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  modalWarning: {
+    fontSize: 15,
+    color: '#333',
+    marginBottom: 8,
+    lineHeight: 22,
+  },
+  modalWarningList: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 12,
+    lineHeight: 22,
+    paddingLeft: 8,
+  },
+  modalConfirmLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  modalInput: {
+    padding: 14,
+    fontSize: 16,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#D32F2F',
+    color: '#333',
+    marginBottom: 16,
+  },
+  modalDeleteBtn: {
+    padding: 16,
+    borderRadius: 10,
+    backgroundColor: '#D32F2F',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  modalDeleteDisabled: { opacity: 0.4 },
+  modalDeleteText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  modalCancelBtn: {
+    padding: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalCancelText: { color: '#666', fontSize: 16 },
 });
