@@ -131,17 +131,26 @@ export default function AddCowScreen({ navigation, route }: any) {
         const parts = e.message.split(':');
         const dupeNumber = parts[1];
         const dupeCowId = parts[2];
-        Alert.alert(
-          'Duplicate Tag',
-          `Tag "${dupeNumber}" is already assigned to another cow on this ranch.`,
-          [
-            { text: 'OK', style: 'cancel' },
-            {
-              text: 'Go to that cow',
-              onPress: () => navigation.replace('CowDetail', { cowId: dupeCowId, ranchId, myRole: route.params?.myRole }),
-            },
-          ]
-        );
+        if (Platform.OS === 'web') {
+          const goToCow = window.confirm(
+            `Tag "${dupeNumber}" is already assigned to another cow on this ranch.\n\nWould you like to go to that cow?`
+          );
+          if (goToCow) {
+            navigation.replace('CowDetail', { cowId: dupeCowId, ranchId, myRole: route.params?.myRole });
+          }
+        } else {
+          Alert.alert(
+            'Duplicate Tag',
+            `Tag "${dupeNumber}" is already assigned to another cow on this ranch.`,
+            [
+              { text: 'OK', style: 'cancel' },
+              {
+                text: 'Go to that cow',
+                onPress: () => navigation.replace('CowDetail', { cowId: dupeCowId, ranchId, myRole: route.params?.myRole }),
+              },
+            ]
+          );
+        }
       } else {
         Alert.alert('Error', 'Failed to save cow. Try again.');
       }

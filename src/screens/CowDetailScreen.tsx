@@ -203,17 +203,26 @@ export default function CowDetailScreen({ route, navigation }: any) {
         const parts = e.message.split(':');
         const dupeNumber = parts[1];
         const dupeCowId = parts[2];
-        Alert.alert(
-          'Duplicate Tag',
-          `Tag "${dupeNumber}" is already assigned to another cow on this ranch.`,
-          [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'Go to that cow',
-              onPress: () => navigation.push('CowDetail', { cowId: dupeCowId, ranchId, myRole }),
-            },
-          ]
-        );
+        if (Platform.OS === 'web') {
+          const goToCow = window.confirm(
+            `Tag "${dupeNumber}" is already assigned to another cow on this ranch.\n\nWould you like to go to that cow?`
+          );
+          if (goToCow) {
+            navigation.push('CowDetail', { cowId: dupeCowId, ranchId, myRole });
+          }
+        } else {
+          Alert.alert(
+            'Duplicate Tag',
+            `Tag "${dupeNumber}" is already assigned to another cow on this ranch.`,
+            [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Go to that cow',
+                onPress: () => navigation.push('CowDetail', { cowId: dupeCowId, ranchId, myRole }),
+              },
+            ]
+          );
+        }
       } else if (e?.message?.includes('Tag number already exists')) {
         Alert.alert('Duplicate Tag', e.message);
       } else {
