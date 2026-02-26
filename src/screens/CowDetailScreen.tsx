@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  Modal,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect } from '@react-navigation/native';
@@ -46,6 +47,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
   const [editBreed, setEditBreed] = useState('');
   const [editBirthMonth, setEditBirthMonth] = useState('');
   const [editBirthYear, setEditBirthYear] = useState('');
+  const [tagLabelPickerIndex, setTagLabelPickerIndex] = useState<number | null>(null);
 
   const loadCow = useCallback(async () => {
     const all = await getAllCows(ranchId);
@@ -160,8 +162,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
     if (!cow) return;
     const newTags = [...cow.tags];
     if (field === 'label') {
-      const currentIdx = TAG_LABELS.indexOf(newTags[tagIndex].label);
-      newTags[tagIndex] = { ...newTags[tagIndex], label: TAG_LABELS[(currentIdx + 1) % TAG_LABELS.length] };
+      newTags[tagIndex] = { ...newTags[tagIndex], label: value };
     } else {
       newTags[tagIndex] = { ...newTags[tagIndex], number: value };
     }
@@ -389,7 +390,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
           <View key={tag.id || i} style={styles.tagRow}>
             <TouchableOpacity
               style={styles.tagLabelBadge}
-              onPress={() => handleEditTag(i, 'label', '')}
+              onPress={() => setTagLabelPickerIndex(i)}
               activeOpacity={0.7}
             >
               <Text style={styles.tagLabelText}>{tag.label} ▼</Text>
@@ -460,6 +461,35 @@ export default function CowDetailScreen({ route, navigation }: any) {
           <Text style={styles.deleteText}>DELETE COW</Text>
         </TouchableOpacity>
       </ScrollView>
+      {/* Tag Label Picker Modal */}
+      <Modal visible={tagLabelPickerIndex !== null} transparent animationType="fade">
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setTagLabelPickerIndex(null)}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Tag Type</Text>
+            {TAG_LABELS.map((label) => (
+              <TouchableOpacity
+                key={label}
+                style={[
+                  styles.modalOption,
+                  tagLabelPickerIndex !== null && cow?.tags[tagLabelPickerIndex]?.label === label && styles.modalOptionActive,
+                ]}
+                onPress={() => {
+                  if (tagLabelPickerIndex !== null) {
+                    handleEditTag(tagLabelPickerIndex, 'label', label);
+                    setTagLabelPickerIndex(null);
+                  }
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={[
+                  styles.modalOptionText,
+                  tagLabelPickerIndex !== null && cow?.tags[tagLabelPickerIndex]?.label === label && styles.modalOptionTextActive,
+                ]}>{label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -651,4 +681,44 @@ const styles = StyleSheet.create({
   },
   deleteText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   emptyText: { fontSize: 18, color: '#999', textAlign: 'center', marginTop: 40 },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#FFF8E7',
+    borderRadius: 16,
+    padding: 20,
+    width: 260,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2D5016',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  modalOption: {
+    padding: 16,
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    marginBottom: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  modalOptionActive: {
+    backgroundColor: '#8B4513',
+    borderColor: '#8B4513',
+  },
+  modalOptionText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  modalOptionTextActive: {
+    color: '#fff',
+  },
 });

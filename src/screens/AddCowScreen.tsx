@@ -10,6 +10,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  Modal,
+  FlatList,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { addCow, getAllPastures, addPasture } from '../services/database';
@@ -38,6 +40,7 @@ export default function AddCowScreen({ navigation, route }: any) {
   const [showPastureInput, setShowPastureInput] = useState(false);
   const [newPastureName, setNewPastureName] = useState('');
   const [saving, setSaving] = useState(false);
+  const [tagLabelPickerIndex, setTagLabelPickerIndex] = useState<number | null>(null);
 
   useEffect(() => {
     getAllPastures(ranchId).then(setPastures);
@@ -58,11 +61,9 @@ export default function AddCowScreen({ navigation, route }: any) {
     setTags(tags.filter((_, i) => i !== index));
   };
 
-  const cycleLabelType = (index: number) => {
-    const current = tags[index].label;
-    const currentIdx = TAG_LABELS.indexOf(current);
-    const next = TAG_LABELS[(currentIdx + 1) % TAG_LABELS.length];
-    updateTag(index, 'label', next);
+  const selectTagLabel = (index: number, label: string) => {
+    updateTag(index, 'label', label);
+    setTagLabelPickerIndex(null);
   };
 
   const pickPhoto = async () => {
@@ -145,7 +146,7 @@ export default function AddCowScreen({ navigation, route }: any) {
           <View key={index} style={styles.tagRow}>
             <TouchableOpacity
               style={styles.tagLabelButton}
-              onPress={() => cycleLabelType(index)}
+              onPress={() => setTagLabelPickerIndex(index)}
               activeOpacity={0.7}
             >
               <Text style={styles.tagLabelText}>{tag.label} ▼</Text>
@@ -303,6 +304,30 @@ export default function AddCowScreen({ navigation, route }: any) {
           <Text style={styles.saveText}>{saving ? 'SAVING...' : 'SAVE COW'}</Text>
         </TouchableOpacity>
       </ScrollView>
+      {/* Tag Label Picker Modal */}
+      <Modal visible={tagLabelPickerIndex !== null} transparent animationType="fade">
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setTagLabelPickerIndex(null)}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Tag Type</Text>
+            {TAG_LABELS.map((label) => (
+              <TouchableOpacity
+                key={label}
+                style={[
+                  styles.modalOption,
+                  tagLabelPickerIndex !== null && tags[tagLabelPickerIndex]?.label === label && styles.modalOptionActive,
+                ]}
+                onPress={() => tagLabelPickerIndex !== null && selectTagLabel(tagLabelPickerIndex, label)}
+                activeOpacity={0.7}
+              >
+                <Text style={[
+                  styles.modalOptionText,
+                  tagLabelPickerIndex !== null && tags[tagLabelPickerIndex]?.label === label && styles.modalOptionTextActive,
+                ]}>{label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -450,4 +475,44 @@ const styles = StyleSheet.create({
   },
   saveDisabled: { opacity: 0.6 },
   saveText: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#FFF8E7',
+    borderRadius: 16,
+    padding: 20,
+    width: 260,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2D5016',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  modalOption: {
+    padding: 16,
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    marginBottom: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  modalOptionActive: {
+    backgroundColor: '#8B4513',
+    borderColor: '#8B4513',
+  },
+  modalOptionText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  modalOptionTextActive: {
+    color: '#fff',
+  },
 });
