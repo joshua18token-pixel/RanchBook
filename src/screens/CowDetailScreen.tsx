@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect } from '@react-navigation/native';
-import { getAllCows, updateCow, addNote, deleteCow, getAllPastures, addPasture, getCowByTag, getCalves, getRanchBreeds, addRanchBreed, removeRanchBreed, getMedicalIssues, addMedicalIssue, removeMedicalIssue } from '../services/database';
+import { getAllCows, updateCow, addNote, deleteCow, getAllPastures, addPasture, getCowByTag, getCalves, getRanchBreeds, addRanchBreed, removeRanchBreed, getMedicalIssues, addMedicalIssue, removeMedicalIssue, getMedicalPresets } from '../services/database';
 import { MedicalIssue } from '../types';
 import PhotoViewer from '../components/PhotoViewer';
 import { Cow, CowStatus, Pasture } from '../types';
@@ -60,6 +60,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
   // Medical issues
   const [medicalIssues, setMedicalIssues] = useState<MedicalIssue[]>([]);
   const [newMedicalLabel, setNewMedicalLabel] = useState('');
+  const [medicalPresets, setMedicalPresets] = useState<{ id: string; label: string }[]>([]);
 
   // Breeds
   const [ranchBreeds, setRanchBreeds] = useState<{ id: string; name: string }[]>([]);
@@ -93,6 +94,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
   useEffect(() => {
     getAllPastures(ranchId).then(setPastures);
     if (ranchId) {
+      getMedicalPresets(ranchId).then(setMedicalPresets).catch(() => {});
       getRanchBreeds(ranchId)
         .then(setRanchBreeds)
         .catch(() => setRanchBreeds(FALLBACK_BREEDS.map((b, i) => ({ id: String(i), name: b }))));
@@ -191,11 +193,16 @@ export default function CowDetailScreen({ route, navigation }: any) {
     loadCow();
   };
 
-  const handleAddMedical = async () => {
-    if (!cow || !newMedicalLabel.trim()) return;
-    await addMedicalIssue(cow.id, newMedicalLabel.trim(), ranchId);
+  const handleAddMedical = async (label?: string) => {
+    if (!cow) return;
+    const issueLabel = (label || newMedicalLabel).trim();
+    if (!issueLabel) return;
+    // Don't add duplicate on same cow
+    if (medicalIssues.find(m => m.label.toLowerCase() === issueLabel.toLowerCase())) return;
+    await addMedicalIssue(cow.id, issueLabel, ranchId);
     setNewMedicalLabel('');
     getMedicalIssues(cow.id).then(setMedicalIssues);
+    getMedicalPresets(ranchId).then(setMedicalPresets).catch(() => {});
   };
 
   const handleRemoveMedical = async (issueId: string, label: string) => {
@@ -524,18 +531,35 @@ export default function CowDetailScreen({ route, navigation }: any) {
         ) : (
           <Text style={styles.noMedical}>No medical issues tracked</Text>
         )}
+        {/* Quick-add from presets */}
+        {medicalPresets.length > 0 && (
+          <View style={styles.medicalPresetsRow}>
+            {medicalPresets
+              .filter(p => !medicalIssues.find(m => m.label.toLowerCase() === p.label.toLowerCase()))
+              .map((preset) => (
+                <TouchableOpacity
+                  key={preset.id}
+                  style={styles.medicalPresetBtn}
+                  onPress={() => handleAddMedical(preset.label)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.medicalPresetText}>+ {preset.label}</Text>
+                </TouchableOpacity>
+              ))}
+          </View>
+        )}
         <View style={styles.addMedicalRow}>
           <TextInput
             style={[styles.editInput, { flex: 1 }]}
             value={newMedicalLabel}
             onChangeText={setNewMedicalLabel}
-            placeholder="Add issue (e.g. prolapse, bad hip)..."
+            placeholder="Add new issue..."
             placeholderTextColor="#999"
             autoCorrect={false}
           />
           <TouchableOpacity
             style={[styles.editSave, !newMedicalLabel.trim() && { opacity: 0.4 }]}
-            onPress={handleAddMedical}
+            onPress={() => handleAddMedical()}
             disabled={!newMedicalLabel.trim()}
           >
             <Text style={styles.editSaveText}>ADD</Text>
@@ -944,6 +968,19 @@ const styles = StyleSheet.create({
   medicalTagDate: { fontSize: 11, color: '#999', marginRight: 8 },
   medicalTagRemove: { fontSize: 14, color: '#D32F2F', fontWeight: 'bold' },
   noMedical: { fontSize: 14, color: '#999', fontStyle: 'italic', marginBottom: 8 },
+  medicalPresetsRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 },
+  medicalPresetBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#D32F2F',
+    borderStyle: 'dashed',
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  medicalPresetText: { fontSize: 13, color: '#D32F2F', fontWeight: '600' },
   addMedicalRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   breedRemoveBtn: {
     width: 24,

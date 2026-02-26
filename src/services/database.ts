@@ -272,6 +272,8 @@ export async function addMedicalIssue(cowId: string, label: string, ranchId: str
     .select()
     .single();
   if (error) throw error;
+  // Auto-save as reusable preset
+  await addMedicalPreset(label, ranchId);
   return { id: data.id, label: data.label, createdAt: data.created_at };
 }
 
@@ -288,6 +290,26 @@ export async function searchCowsByMedical(query: string, ranchId: string): Promi
     .ilike('label', `%${query}%`);
   if (error) throw error;
   return [...new Set((data || []).map(m => m.cow_id))];
+}
+
+// ── Medical Presets ──
+
+export async function getMedicalPresets(ranchId: string): Promise<{ id: string; label: string }[]> {
+  const { data, error } = await supabase
+    .from('medical_presets')
+    .select('id, label')
+    .eq('ranch_id', ranchId)
+    .order('label', { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function addMedicalPreset(label: string, ranchId: string): Promise<void> {
+  await supabase
+    .from('medical_presets')
+    .insert({ label, ranch_id: ranchId })
+    .select();
+  // ignore duplicate errors
 }
 
 // ── Ranch Breeds ──

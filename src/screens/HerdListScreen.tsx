@@ -60,13 +60,17 @@ export default function HerdListScreen({ navigation, route }: any) {
     });
   }, [ranchName]);
   const [cows, setCows] = useState<Cow[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'lastUpdated' | 'leastUpdated'>('newest');
   const [query, setQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [pastures, setPastures] = useState<Pasture[]>([]);
 
   const loadCows = useCallback(async () => {
+    const all = await getAllCows(ranchId);
+    setTotalCount(all.length);
     if (!query.trim()) {
-      setCows(await getAllCows(ranchId));
+      setCows(all);
       return;
     }
     const range = parseDateRange(query.trim());
@@ -123,6 +127,16 @@ export default function HerdListScreen({ navigation, route }: any) {
     return 'No Tag';
   };
 
+  const sortedCows = [...cows].sort((a, b) => {
+    switch (sortBy) {
+      case 'oldest': return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+      case 'newest': return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+      case 'lastUpdated': return new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime();
+      case 'leastUpdated': return new Date(a.updatedAt || 0).getTime() - new Date(b.updatedAt || 0).getTime();
+      default: return 0;
+    }
+  });
+
   const renderCow = ({ item }: { item: Cow }) => {
     const cowPasture = pastures.find(p => p.id === item.pastureId);
     return (
@@ -137,6 +151,9 @@ export default function HerdListScreen({ navigation, route }: any) {
         {item.tags.length > 1 && (
           <Text style={styles.extraTags}>+{item.tags.length - 1} more tags</Text>
         )}
+        {(sortBy === 'lastUpdated' || sortBy === 'leastUpdated') && item.updatedAt && (
+          <Text style={styles.updatedDate}>Updated: {new Date(item.updatedAt).toLocaleDateString()}</Text>
+        )}
       </View>
       <View style={[styles.statusBadge, { backgroundColor: STATUS_COLORS[item.status] }]}>  
         <Text style={styles.statusText}>{item.status.toUpperCase()}</Text>
@@ -147,6 +164,15 @@ export default function HerdListScreen({ navigation, route }: any) {
 
   return (
     <View style={styles.container}>
+      {/* Cow count */}
+      <View style={styles.countRow}>
+        <Text style={styles.countText}>
+          {query.trim() && cows.length !== totalCount
+            ? `Showing ${cows.length} of ${totalCount} Cows`
+            : `${totalCount} Cows`}
+        </Text>
+      </View>
+
       <TextInput
         style={styles.searchBar}
         placeholder="Search tag, pasture, or 02/2024-06/2025..."
@@ -159,8 +185,28 @@ export default function HerdListScreen({ navigation, route }: any) {
         returnKeyType="search"
         autoCorrect={false}
       />
+      {/* Sort options */}
+      <View style={styles.sortRow}>
+        {([
+          { key: 'newest', label: 'Newest' },
+          { key: 'oldest', label: 'Oldest' },
+          { key: 'lastUpdated', label: 'Last Updated' },
+          { key: 'leastUpdated', label: '⚠️ Not Updated' },
+        ] as const).map(opt => (
+          <TouchableOpacity
+            key={opt.key}
+            style={[styles.sortBtn, sortBy === opt.key && styles.sortBtnActive]}
+            onPress={() => setSortBy(opt.key)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.sortBtnText, sortBy === opt.key && styles.sortBtnTextActive]}>
+              {opt.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
       <FlatList
-        data={cows}
+        data={sortedCows}
         keyExtractor={(item) => item.id}
         renderItem={renderCow}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -203,6 +249,30 @@ export default function HerdListScreen({ navigation, route }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFF8E7' },
+  countRow: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 4,
+  },
+  countText: { fontSize: 16, fontWeight: 'bold', color: '#2D5016' },
+  sortRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  sortBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: '#e0e0e0',
+    marginRight: 8,
+    marginBottom: 4,
+  },
+  sortBtnActive: { backgroundColor: '#2D5016' },
+  sortBtnText: { fontSize: 13, fontWeight: '600', color: '#666' },
+  sortBtnTextActive: { color: '#fff' },
+  updatedDate: { fontSize: 12, color: '#999', marginTop: 2 },
   searchBar: {
     margin: 12,
     padding: 14,
