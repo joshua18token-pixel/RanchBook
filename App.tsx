@@ -6,8 +6,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 // Context for app-level actions that survive navigation
 export const AppContext = createContext<{ switchToRanchSelect: () => void }>({ switchToRanchSelect: () => {} });
 
-// Key to force remount of NavigationContainer when ranch changes
-let navKey = 0;
+
 import { supabase } from './src/services/supabase';
 import LoginScreen from './src/screens/LoginScreen';
 import RanchSetupScreen from './src/screens/RanchSetupScreen';
@@ -27,6 +26,7 @@ type AppState = 'loading' | 'login' | 'ranch_select' | 'app';
 export default function App() {
   const [appState, setAppState] = useState<AppState>('loading');
   const [ranchId, setRanchId] = useState<string | null>(null);
+  const [navKey, setNavKey] = useState(0);
   const [ranchName, setRanchName] = useState<string>('');
   const [myRole, setMyRole] = useState<string>('read');
 
@@ -59,7 +59,7 @@ export default function App() {
     return (
       <RanchSetupScreen
         onRanchSelected={(id, role, name) => {
-          navKey++; // Force navigation stack reset
+          setNavKey(k => k + 1); // Force navigation stack reset
           setRanchId(id);
           setMyRole(role);
           setRanchName(name || 'Ranch');
@@ -84,7 +84,7 @@ export default function App() {
 
   return (
     <AppContext.Provider value={{ switchToRanchSelect: () => setAppState('ranch_select') }}>
-    <NavigationContainer key={`nav-${navKey}`} linking={linking} documentTitle={{ formatter: (options) => options?.title ? `${options.title} | RanchBook` : 'RanchBook' }}>
+    <NavigationContainer key={`nav-${ranchId}-${navKey}`} documentTitle={{ formatter: (options) => options?.title ? `${options.title} | RanchBook` : 'RanchBook' }}>
       <Stack.Navigator
         screenOptions={{ headerStyle, headerTintColor, headerTitleStyle }}
       >
