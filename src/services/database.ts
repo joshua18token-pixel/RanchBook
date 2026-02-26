@@ -53,6 +53,25 @@ export async function addCow(
   cow: Omit<Cow, 'id' | 'createdAt' | 'updatedAt' | 'notes'>,
   ranchId?: string
 ): Promise<Cow> {
+  // Pre-check for duplicate tags
+  if (cow.tags.length > 0 && ranchId) {
+    const tagNumbers = cow.tags.map(t => t.number.trim()).filter(n => n);
+    if (tagNumbers.length > 0) {
+      const { data: existing } = await supabase
+        .from('tags')
+        .select('number, cow_id')
+        .eq('ranch_id', ranchId)
+        .in('number', tagNumbers);
+      if (existing && existing.length > 0) {
+        const dupe = existing[0];
+        const err: any = new Error(`DUPLICATE_TAG:${dupe.number}:${dupe.cow_id}`);
+        err.duplicateTag = dupe.number;
+        err.duplicateCowId = dupe.cow_id;
+        throw err;
+      }
+    }
+  }
+
   const { data: cowRow, error: cowError } = await supabase
     .from('cows')
     .insert({
@@ -113,6 +132,24 @@ export async function updateCow(id: string, updates: Partial<Cow>, ranchId?: str
   if (updates.tags !== undefined) {
     // Only save tags that have a non-empty number
     const validTags = updates.tags.filter(t => t.number.trim() !== '');
+
+    // Pre-check for duplicates so we can report which cow has the tag
+    if (validTags.length > 0 && ranchId) {
+      const tagNumbers = validTags.map(t => t.number.trim());
+      const { data: existing } = await supabase
+        .from('tags')
+        .select('number, cow_id')
+        .eq('ranch_id', ranchId)
+        .neq('cow_id', id)
+        .in('number', tagNumbers);
+      if (existing && existing.length > 0) {
+        const dupe = existing[0];
+        const err: any = new Error(`DUPLICATE_TAG:${dupe.number}:${dupe.cow_id}`);
+        err.duplicateTag = dupe.number;
+        err.duplicateCowId = dupe.cow_id;
+        throw err;
+      }
+    }
 
     // Backup existing tags before deleting
     const { data: oldTags } = await supabase.from('tags').select('*').eq('cow_id', id);

@@ -199,7 +199,22 @@ export default function CowDetailScreen({ route, navigation }: any) {
       setTagsChanged(false);
       loadCow();
     } catch (e: any) {
-      if (e?.message?.includes('Tag number already exists')) {
+      if (e?.message?.startsWith('DUPLICATE_TAG:')) {
+        const parts = e.message.split(':');
+        const dupeNumber = parts[1];
+        const dupeCowId = parts[2];
+        Alert.alert(
+          'Duplicate Tag',
+          `Tag "${dupeNumber}" is already assigned to another cow on this ranch.`,
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Go to that cow',
+              onPress: () => navigation.push('CowDetail', { cowId: dupeCowId, ranchId, myRole }),
+            },
+          ]
+        );
+      } else if (e?.message?.includes('Tag number already exists')) {
         Alert.alert('Duplicate Tag', e.message);
       } else {
         Alert.alert('Error', 'Failed to save tags. Try again.');
