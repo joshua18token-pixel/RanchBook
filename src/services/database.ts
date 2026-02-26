@@ -153,35 +153,31 @@ export async function deleteCow(id: string): Promise<boolean> {
   return true;
 }
 
-// ── Pastures (stored in Supabase too) ──
+// ── Pastures (Supabase) ──
 
 export async function getAllPastures(ranchId?: string): Promise<Pasture[]> {
-  // Using AsyncStorage for pastures for now since we don't have a pastures table in Supabase yet
-  // TODO: migrate pastures to Supabase
-  const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-  const key = ranchId ? `ranchbook_pastures_${ranchId}` : 'ranchbook_pastures';
-  const data = await AsyncStorage.getItem(key);
-  return data ? JSON.parse(data) : [];
-}
+  let query = supabase.from('pastures').select('*');
+  if (ranchId) query = query.eq('ranch_id', ranchId);
+  query = query.order('name', { ascending: true });
 
-export async function savePastures(pastures: Pasture[], ranchId?: string): Promise<void> {
-  const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-  const key = ranchId ? `ranchbook_pastures_${ranchId}` : 'ranchbook_pastures';
-  await AsyncStorage.setItem(key, JSON.stringify(pastures));
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data || []).map(p => ({ id: p.id, name: p.name, createdAt: p.created_at }));
 }
 
 export async function addPasture(name: string, ranchId?: string): Promise<Pasture> {
-  const pastures = await getAllPastures(ranchId);
-  const p: Pasture = { id: generateId(), name, createdAt: new Date().toISOString() };
-  pastures.push(p);
-  await savePastures(pastures, ranchId);
-  return p;
+  const { data, error } = await supabase
+    .from('pastures')
+    .insert({ name, ranch_id: ranchId || null })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return { id: data.id, name: data.name, createdAt: data.created_at };
 }
 
-export async function deletePasture(id: string, ranchId?: string): Promise<boolean> {
-  const pastures = await getAllPastures(ranchId);
-  const filtered = pastures.filter(p => p.id !== id);
-  if (filtered.length === pastures.length) return false;
-  await savePastures(filtered, ranchId);
+export async function deletePasture(id: string): Promise<boolean> {
+  const { error } = await supabase.from('pastures').delete().eq('id', id);
+  if (error) throw error;
   return true;
 }
