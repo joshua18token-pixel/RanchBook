@@ -17,14 +17,24 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  const showMessage = (text: string, type: 'success' | 'error') => {
+    setStatusMessage({ text, type });
+    if (Platform.OS !== 'web') {
+      Alert.alert(type === 'success' ? 'Success' : 'Error', text);
+    }
+  };
 
   const handleSubmit = async () => {
+    setStatusMessage(null);
+    
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Missing Info', 'Enter your email and password.');
+      showMessage('Enter your email and password.', 'error');
       return;
     }
     if (password.length < 6) {
-      Alert.alert('Password Too Short', 'Password must be at least 6 characters.');
+      showMessage('Password must be at least 6 characters.', 'error');
       return;
     }
 
@@ -32,23 +42,22 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
     try {
       if (isSignUp) {
         await signUp(email.trim().toLowerCase(), password);
-        Alert.alert('Account Created', 'Check your email to confirm, then log in.', [
-          { text: 'OK', onPress: () => setIsSignUp(false) },
-        ]);
+        showMessage('✅ Account created! Check your email for a confirmation link, then come back and sign in.', 'success');
+        setIsSignUp(false);
       } else {
         await signIn(email.trim().toLowerCase(), password);
+        showMessage('✅ Signed in!', 'success');
         onLogin();
       }
     } catch (e: any) {
       let msg = e.message || 'Something went wrong';
-      // Make Supabase errors user-friendly
       if (msg.includes('Invalid login credentials')) msg = 'Wrong email or password. Please try again.';
       else if (msg.includes('Email not confirmed')) msg = 'Check your email and click the confirmation link first.';
-      else if (msg.includes('User already registered')) msg = 'An account with this email already exists. Try signing in.';
+      else if (msg.includes('User already registered')) msg = 'An account with this email already exists. Try signing in instead.';
       else if (msg.includes('rate_limit') || msg.includes('after')) msg = 'Too many attempts. Please wait a minute and try again.';
-      else if (msg.includes('Password should be')) msg = msg; // Already clear
       else if (msg.includes('Unable to validate email')) msg = 'Please enter a valid email address.';
-      Alert.alert('Error', msg);
+      else if (msg.includes('sending confirmation')) msg = 'Could not send confirmation email. Please try again in a minute.';
+      showMessage(msg, 'error');
     } finally {
       setLoading(false);
     }
@@ -70,12 +79,19 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
           {isSignUp ? 'Create your account' : 'Sign in to your ranch'}
         </Text>
 
+        {/* Status message */}
+        {statusMessage && (
+          <View style={[styles.statusBanner, statusMessage.type === 'success' ? styles.statusSuccess : styles.statusError]}>
+            <Text style={styles.statusText}>{statusMessage.text}</Text>
+          </View>
+        )}
+
         <TextInput
           style={styles.input}
           placeholder="Email"
           placeholderTextColor="#999"
           value={email}
-          onChangeText={setEmail}
+          onChangeText={(v) => { setEmail(v); setStatusMessage(null); }}
           keyboardType="email-address"
           autoCapitalize="none"
           autoCorrect={false}
@@ -83,10 +99,10 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
 
         <TextInput
           style={styles.input}
-          placeholder="Password"
+          placeholder="Password (min 6 characters)"
           placeholderTextColor="#999"
           value={password}
-          onChangeText={setPassword}
+          onChangeText={(v) => { setPassword(v); setStatusMessage(null); }}
           secureTextEntry
         />
 
@@ -103,13 +119,21 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
 
         <TouchableOpacity
           style={styles.switchButton}
-          onPress={() => setIsSignUp(!isSignUp)}
+          onPress={() => { setIsSignUp(!isSignUp); setStatusMessage(null); }}
           activeOpacity={0.7}
         >
           <Text style={styles.switchText}>
             {isSignUp ? 'Already have an account? Sign in' : "New here? Create an account"}
           </Text>
         </TouchableOpacity>
+
+        {isSignUp && (
+          <View style={styles.signupInfo}>
+            <Text style={styles.signupInfoText}>
+              📧 After creating your account, you'll receive a confirmation email. Click the link to verify, then sign in.
+            </Text>
+          </View>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -121,7 +145,15 @@ const styles = StyleSheet.create({
   content: { flexGrow: 1, justifyContent: 'center', padding: 24 },
   logo: { fontSize: 64, textAlign: 'center', marginBottom: 8 },
   title: { fontSize: 36, fontWeight: 'bold', color: '#2D5016', textAlign: 'center' },
-  subtitle: { fontSize: 16, color: '#666', textAlign: 'center', marginBottom: 32 },
+  subtitle: { fontSize: 16, color: '#666', textAlign: 'center', marginBottom: 24 },
+  statusBanner: {
+    padding: 14,
+    borderRadius: 10,
+    marginBottom: 16,
+  },
+  statusSuccess: { backgroundColor: '#E8F5E9', borderLeftWidth: 4, borderLeftColor: '#4CAF50' },
+  statusError: { backgroundColor: '#FFEBEE', borderLeftWidth: 4, borderLeftColor: '#D32F2F' },
+  statusText: { fontSize: 15, color: '#333', lineHeight: 22 },
   input: {
     padding: 16,
     fontSize: 18,
@@ -143,4 +175,13 @@ const styles = StyleSheet.create({
   buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
   switchButton: { marginTop: 20, alignItems: 'center' },
   switchText: { color: '#8B4513', fontSize: 16 },
+  signupInfo: {
+    marginTop: 20,
+    padding: 14,
+    backgroundColor: '#FFF3E0',
+    borderRadius: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: '#FF9800',
+  },
+  signupInfoText: { fontSize: 14, color: '#666', lineHeight: 20 },
 });
