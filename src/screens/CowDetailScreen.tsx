@@ -166,19 +166,25 @@ export default function CowDetailScreen({ route, navigation }: any) {
     } else {
       newTags[tagIndex] = { ...newTags[tagIndex], number: value };
     }
-    updateCow(cow.id, { tags: newTags }, ranchId).then(loadCow).catch((e: any) => {
-      if (e?.message?.includes('Tag number already exists')) {
-        Alert.alert('Duplicate Tag', e.message);
-      }
-      loadCow();
-    });
+    // Update local state immediately for responsive UI
+    setCow({ ...cow, tags: newTags });
+    // Only persist to DB if all tags have numbers (skip empty ones)
+    const hasEmpty = newTags.some(t => t.number.trim() === '');
+    if (!hasEmpty) {
+      updateCow(cow.id, { tags: newTags }, ranchId).then(loadCow).catch((e: any) => {
+        if (e?.message?.includes('Tag number already exists')) {
+          Alert.alert('Duplicate Tag', e.message);
+        }
+        loadCow(); // Reload to restore DB state
+      });
+    }
   };
 
   const addNewTag = async () => {
     if (!cow) return;
+    // Add empty tag to local state only — it won't save to DB until a number is entered
     const newTags = [...cow.tags, { id: Date.now().toString(36), label: 'ear tag', number: '' }];
-    await updateCow(cow.id, { tags: newTags }, ranchId);
-    loadCow();
+    setCow({ ...cow, tags: newTags });
   };
 
   const removeTag = async (index: number) => {

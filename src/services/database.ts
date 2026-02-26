@@ -111,17 +111,32 @@ export async function updateCow(id: string, updates: Partial<Cow>, ranchId?: str
 
   // Handle tag updates
   if (updates.tags !== undefined) {
-    // Delete existing tags and re-insert
+    // Only save tags that have a non-empty number
+    const validTags = updates.tags.filter(t => t.number.trim() !== '');
+
+    // Backup existing tags before deleting
+    const { data: oldTags } = await supabase.from('tags').select('*').eq('cow_id', id);
+
     await supabase.from('tags').delete().eq('cow_id', id);
-    if (updates.tags.length > 0) {
-      const tagInserts = updates.tags.map(t => ({
+
+    if (validTags.length > 0) {
+      const tagInserts = validTags.map(t => ({
         cow_id: id,
         label: t.label,
-        number: t.number,
+        number: t.number.trim(),
         ranch_id: ranchId || null,
       }));
       const { error: tagError } = await supabase.from('tags').insert(tagInserts);
       if (tagError) {
+        // Restore old tags on failure
+        if (oldTags && oldTags.length > 0) {
+          await supabase.from('tags').insert(oldTags.map(t => ({
+            cow_id: t.cow_id,
+            label: t.label,
+            number: t.number,
+            ranch_id: t.ranch_id,
+          })));
+        }
         if (tagError.code === '23505') {
           throw new Error('Tag number already exists on this ranch');
         }
