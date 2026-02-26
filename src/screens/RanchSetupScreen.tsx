@@ -100,10 +100,10 @@ export default function RanchSetupScreen({ onRanchSelected, onLogout }: Props) {
       {/* Existing ranches */}
       {ranches.length > 0 && (
         <View style={styles.section}>
-          {ranches.map((item: any) => {
+          {ranches.map((item: any, index: number) => {
             const name = (item.ranches as any)?.name || 'Ranch';
             return (
-              <View key={item.ranch_id} style={styles.ranchRow}>
+              <View key={item.id || `${item.ranch_id}-${index}`} style={styles.ranchRow}>
                 <TouchableOpacity
                   style={[styles.ranchCard, { flex: 1 }]}
                   onPress={() => onRanchSelected(item.ranch_id, item.role, name)}
