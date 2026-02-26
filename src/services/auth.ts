@@ -57,9 +57,13 @@ export async function createRanch(name: string) {
 }
 
 export async function getMyRanches() {
+  const user = await getCurrentUser();
+  if (!user) throw new Error('Not logged in');
+
   const { data, error } = await supabase
     .from('ranch_members')
-    .select('ranch_id, role, ranches(id, name, owner_id)')
+    .select('id, ranch_id, role, ranches(id, name, owner_id)')
+    .eq('user_id', user.id)
     .eq('accepted', true);
 
   if (error) throw error;
