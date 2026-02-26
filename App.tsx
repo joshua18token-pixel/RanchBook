@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Platform, TouchableOpacity, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { supabase } from './src/services/supabase';
@@ -76,19 +77,40 @@ export default function App() {
         <Stack.Screen
           name="AddCow"
           component={AddCowScreen}
-          options={{ title: 'Add Cow' }}
+          options={({ navigation }) => ({
+            title: 'Add Cow',
+            ...(Platform.OS === 'web' ? { headerLeft: () => (
+              <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 12 }}>
+                <Text style={{ color: '#FFF8E7', fontSize: 18 }}>← Back</Text>
+              </TouchableOpacity>
+            )} : {}),
+          })}
           initialParams={{ ranchId }}
         />
         <Stack.Screen
           name="CowDetail"
           component={CowDetailScreen}
-          options={{ title: 'Cow Details' }}
+          options={({ navigation }) => ({
+            title: 'Cow Details',
+            ...(Platform.OS === 'web' ? { headerLeft: () => (
+              <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 12 }}>
+                <Text style={{ color: '#FFF8E7', fontSize: 18 }}>← Back</Text>
+              </TouchableOpacity>
+            )} : {}),
+          })}
           initialParams={{ ranchId, myRole }}
         />
         <Stack.Screen
           name="Team"
           component={TeamScreen}
-          options={{ title: 'Team' }}
+          options={({ navigation }) => ({
+            title: 'Team',
+            ...(Platform.OS === 'web' ? { headerLeft: () => (
+              <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 12 }}>
+                <Text style={{ color: '#FFF8E7', fontSize: 18 }}>← Back</Text>
+              </TouchableOpacity>
+            )} : {}),
+          })}
           initialParams={{ ranchId, myRole }}
         />
       </Stack.Navigator>
