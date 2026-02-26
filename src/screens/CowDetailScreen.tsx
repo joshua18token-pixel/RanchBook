@@ -48,17 +48,21 @@ export default function CowDetailScreen({ route, navigation }: any) {
   const [editBirthMonth, setEditBirthMonth] = useState('');
   const [editBirthYear, setEditBirthYear] = useState('');
   const [tagLabelPickerIndex, setTagLabelPickerIndex] = useState<number | null>(null);
+  const [editTags, setEditTags] = useState<{ id: string; label: string; number: string }[]>([]);
+  const [tagsChanged, setTagsChanged] = useState(false);
+  const [savingTags, setSavingTags] = useState(false);
 
   const loadCow = useCallback(async () => {
     const all = await getAllCows(ranchId);
     const found = all.find(c => c.id === cowId);
     setCow(found || null);
     if (found) {
-
       setEditDescription(found.description || '');
       setEditBreed(found.breed || '');
       setEditBirthMonth(found.birthMonth ? String(found.birthMonth) : '');
       setEditBirthYear(found.birthYear ? String(found.birthYear) : '');
+      setEditTags(found.tags.map(t => ({ id: t.id, label: t.label, number: t.number })));
+      setTagsChanged(false);
     }
   }, [cowId]);
 
@@ -157,41 +161,59 @@ export default function CowDetailScreen({ route, navigation }: any) {
     loadCow();
   };
 
-  // Edit tags
+  // Edit tags — local only until Save
   const handleEditTag = (tagIndex: number, field: 'label' | 'number', value: string) => {
+    const newTags = [...editTags];
+    newTags[tagIndex] = { ...newTags[tagIndex], [field]: value };
+    setEditTags(newTags);
+    setTagsChanged(true);
+  };
+
+  const addNewTag = () => {
+    setEditTags([...editTags, { id: Date.now().toString(36), label: 'ear tag', number: '' }]);
+    setTagsChanged(true);
+  };
+
+  const removeTagLocal = (index: number) => {
+    if (editTags.length <= 1) return;
+    setEditTags(editTags.filter((_, i) => i !== index));
+    setTagsChanged(true);
+  };
+
+  const saveTags = async () => {
     if (!cow) return;
-    const newTags = [...cow.tags];
-    if (field === 'label') {
-      newTags[tagIndex] = { ...newTags[tagIndex], label: value };
-    } else {
-      newTags[tagIndex] = { ...newTags[tagIndex], number: value };
+    // Validate: no empty tag numbers
+    const validTags = editTags.filter(t => t.number.trim() !== '');
+    if (validTags.length === 0) {
+      Alert.alert('Error', 'At least one tag must have a number.');
+      return;
     }
-    // Update local state immediately for responsive UI
-    setCow({ ...cow, tags: newTags });
-    // Only persist to DB if all tags have numbers (skip empty ones)
-    const hasEmpty = newTags.some(t => t.number.trim() === '');
-    if (!hasEmpty) {
-      updateCow(cow.id, { tags: newTags }, ranchId).then(loadCow).catch((e: any) => {
-        if (e?.message?.includes('Tag number already exists')) {
-          Alert.alert('Duplicate Tag', e.message);
-        }
-        loadCow(); // Reload to restore DB state
-      });
+    const emptyCount = editTags.length - validTags.length;
+    if (emptyCount > 0) {
+      Alert.alert('Error', 'Remove or fill in empty tags before saving.');
+      return;
+    }
+    setSavingTags(true);
+    try {
+      await updateCow(cow.id, { tags: validTags }, ranchId);
+      setTagsChanged(false);
+      loadCow();
+    } catch (e: any) {
+      if (e?.message?.includes('Tag number already exists')) {
+        Alert.alert('Duplicate Tag', e.message);
+      } else {
+        Alert.alert('Error', 'Failed to save tags. Try again.');
+      }
+    } finally {
+      setSavingTags(false);
     }
   };
 
-  const addNewTag = async () => {
-    if (!cow) return;
-    // Add empty tag to local state only — it won't save to DB until a number is entered
-    const newTags = [...cow.tags, { id: Date.now().toString(36), label: 'ear tag', number: '' }];
-    setCow({ ...cow, tags: newTags });
-  };
-
-  const removeTag = async (index: number) => {
-    if (!cow || cow.tags.length <= 1) return;
-    const newTags = cow.tags.filter((_, i) => i !== index);
-    await updateCow(cow.id, { tags: newTags }, ranchId);
-    loadCow();
+  const cancelTagEdits = () => {
+    if (cow) {
+      setEditTags(cow.tags.map(t => ({ id: t.id, label: t.label, number: t.number })));
+      setTagsChanged(false);
+    }
   };
 
   const handleDelete = () => {
@@ -232,7 +254,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
       <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {/* Header with primary tag + status */}
         <View style={styles.header}>
-          <Text style={styles.cowName}>{cow.tags[0]?.number || 'No Tag'}</Text>
+          <Text style={styles.cowName}>{editTags[0]?.number || cow.tags[0]?.number || 'No Tag'}</Text>
           <TouchableOpacity
             style={[styles.statusBadgeLarge, { backgroundColor: STATUS_COLORS[cow.status] }]}
             onPress={() => setShowStatusPicker(!showStatusPicker)}
@@ -397,7 +419,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
 
         {/* Tags */}
         <Text style={styles.sectionTitle}>Tags</Text>
-        {cow.tags.map((tag, i) => (
+        {editTags.map((tag, i) => (
           <View key={tag.id || i} style={styles.tagRow}>
             <TouchableOpacity
               style={styles.tagLabelBadge}
@@ -410,11 +432,13 @@ export default function CowDetailScreen({ route, navigation }: any) {
               style={styles.tagNumberInput}
               value={tag.number}
               onChangeText={(v) => handleEditTag(i, 'number', v)}
+              placeholder="Tag number"
+              placeholderTextColor="#999"
               autoCapitalize="characters"
               autoCorrect={false}
             />
-            {cow.tags.length > 1 && (
-              <TouchableOpacity style={styles.tagRemove} onPress={() => removeTag(i)}>
+            {editTags.length > 1 && (
+              <TouchableOpacity style={styles.tagRemove} onPress={() => removeTagLocal(i)}>
                 <Text style={styles.tagRemoveText}>✕</Text>
               </TouchableOpacity>
             )}
@@ -423,6 +447,16 @@ export default function CowDetailScreen({ route, navigation }: any) {
         <TouchableOpacity style={styles.addTagBtn} onPress={addNewTag} activeOpacity={0.7}>
           <Text style={styles.addTagBtnText}>+ Add Tag</Text>
         </TouchableOpacity>
+        {tagsChanged && (
+          <View style={styles.tagActions}>
+            <TouchableOpacity style={styles.tagSaveBtn} onPress={saveTags} disabled={savingTags} activeOpacity={0.7}>
+              <Text style={styles.tagSaveBtnText}>{savingTags ? 'SAVING...' : 'SAVE TAGS'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.tagCancelBtn} onPress={cancelTagEdits} activeOpacity={0.7}>
+              <Text style={styles.tagCancelBtnText}>CANCEL</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Photos */}
         <Text style={styles.sectionTitle}>Photos ({(cow.photos || []).length})</Text>
@@ -482,7 +516,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
                 key={label}
                 style={[
                   styles.modalOption,
-                  tagLabelPickerIndex !== null && cow?.tags[tagLabelPickerIndex]?.label === label && styles.modalOptionActive,
+                  tagLabelPickerIndex !== null && editTags[tagLabelPickerIndex]?.label === label && styles.modalOptionActive,
                 ]}
                 onPress={() => {
                   if (tagLabelPickerIndex !== null) {
@@ -494,7 +528,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
               >
                 <Text style={[
                   styles.modalOptionText,
-                  tagLabelPickerIndex !== null && cow?.tags[tagLabelPickerIndex]?.label === label && styles.modalOptionTextActive,
+                  tagLabelPickerIndex !== null && editTags[tagLabelPickerIndex]?.label === label && styles.modalOptionTextActive,
                 ]}>{label}</Text>
               </TouchableOpacity>
             ))}
@@ -618,6 +652,24 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   addTagBtnText: { fontSize: 14, color: '#2D5016', fontWeight: '600' },
+  tagActions: { flexDirection: 'row', marginTop: 8, marginBottom: 8 },
+  tagSaveBtn: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 10,
+    backgroundColor: '#2D5016',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  tagSaveBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  tagCancelBtn: {
+    padding: 14,
+    borderRadius: 10,
+    backgroundColor: '#e0e0e0',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  tagCancelBtnText: { color: '#666', fontWeight: 'bold', fontSize: 16 },
   photoGrid: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 },
   photo: {
     width: 100,
