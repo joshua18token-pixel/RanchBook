@@ -51,7 +51,7 @@ export default function TeamScreen({ route }: any) {
     }
   };
 
-  const handleChangeRole = (member: any) => {
+  const handleChangeRole = async (member: any) => {
     if (member.role === 'manager') return;
     const newRole = member.role === 'write' ? 'read' : 'write';
     if (Platform.OS === 'web') {
