@@ -126,8 +126,11 @@ export default function AddCowScreen({ navigation, route }: any) {
         })),
       }, ranchId);
       navigation.goBack();
-    } catch (e) {
-      Alert.alert('Error', 'Failed to save cow. Try again.');
+    } catch (e: any) {
+      const msg = e?.message?.includes('Tag number already exists')
+        ? e.message
+        : 'Failed to save cow. Try again.';
+      Alert.alert('Error', msg);
     } finally {
       setSaving(false);
     }

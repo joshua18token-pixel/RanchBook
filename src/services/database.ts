@@ -76,9 +76,18 @@ export async function addCow(
       cow_id: cowRow.id,
       label: t.label,
       number: t.number,
+      ranch_id: ranchId || null,
     }));
     const { error: tagError } = await supabase.from('tags').insert(tagInserts);
-    if (tagError) throw tagError;
+    if (tagError) {
+      // Clean up the cow if tags fail (e.g. duplicate tag)
+      await supabase.from('cows').delete().eq('id', cowRow.id);
+      if (tagError.code === '23505') {
+        const dupeNum = cow.tags.map(t => t.number).join(', ');
+        throw new Error(`Tag number already exists on this ranch: ${dupeNum}`);
+      }
+      throw tagError;
+    }
   }
 
   // Reload to get full object
@@ -86,7 +95,7 @@ export async function addCow(
   return all.find(c => c.id === cowRow.id) || cowRow;
 }
 
-export async function updateCow(id: string, updates: Partial<Cow>): Promise<Cow | null> {
+export async function updateCow(id: string, updates: Partial<Cow>, ranchId?: string): Promise<Cow | null> {
   const dbUpdates: any = { updated_at: new Date().toISOString() };
 
   if (updates.description !== undefined) dbUpdates.description = updates.description || null;
@@ -109,8 +118,15 @@ export async function updateCow(id: string, updates: Partial<Cow>): Promise<Cow 
         cow_id: id,
         label: t.label,
         number: t.number,
+        ranch_id: ranchId || null,
       }));
-      await supabase.from('tags').insert(tagInserts);
+      const { error: tagError } = await supabase.from('tags').insert(tagInserts);
+      if (tagError) {
+        if (tagError.code === '23505') {
+          throw new Error('Tag number already exists on this ranch');
+        }
+        throw tagError;
+      }
     }
   }
 

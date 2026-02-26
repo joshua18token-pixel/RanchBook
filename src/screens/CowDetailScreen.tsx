@@ -84,21 +84,21 @@ export default function CowDetailScreen({ route, navigation }: any) {
         updates.birthYear = editBirthYear ? parseInt(editBirthYear, 10) : undefined;
         break;
     }
-    await updateCow(cow.id, updates);
+    await updateCow(cow.id, updates, ranchId);
     setEditingField(null);
     loadCow();
   };
 
   const handleStatusChange = async (newStatus: CowStatus) => {
     if (!cow) return;
-    await updateCow(cow.id, { status: newStatus });
+    await updateCow(cow.id, { status: newStatus }, ranchId);
     setShowStatusPicker(false);
     loadCow();
   };
 
   const handlePastureChange = async (pastureId: string | undefined) => {
     if (!cow) return;
-    await updateCow(cow.id, { pastureId });
+    await updateCow(cow.id, { pastureId }, ranchId);
     setShowPasturePicker(false);
     loadCow();
   };
@@ -107,7 +107,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
     if (!newPastureName.trim() || !cow) return;
     const p = await addPasture(newPastureName.trim(), ranchId);
     setPastures([...pastures, p]);
-    await updateCow(cow.id, { pastureId: p.id });
+    await updateCow(cow.id, { pastureId: p.id }, ranchId);
     setNewPastureName('');
     setShowPastureInput(false);
     setShowPasturePicker(false);
@@ -130,7 +130,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
     });
     if (!result.canceled) {
       const newPhotos = [...(cow.photos || []), ...result.assets.map(a => a.uri)];
-      await updateCow(cow.id, { photos: newPhotos });
+      await updateCow(cow.id, { photos: newPhotos }, ranchId);
       loadCow();
     }
   };
@@ -145,7 +145,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
     const result = await ImagePicker.launchCameraAsync({ quality: 0.7 });
     if (!result.canceled) {
       const newPhotos = [...(cow.photos || []), result.assets[0].uri];
-      await updateCow(cow.id, { photos: newPhotos });
+      await updateCow(cow.id, { photos: newPhotos }, ranchId);
       loadCow();
     }
   };
@@ -153,7 +153,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
   const removePhoto = async (index: number) => {
     if (!cow) return;
     const newPhotos = (cow.photos || []).filter((_, i) => i !== index);
-    await updateCow(cow.id, { photos: newPhotos.length > 0 ? newPhotos : undefined });
+    await updateCow(cow.id, { photos: newPhotos.length > 0 ? newPhotos : undefined }, ranchId);
     loadCow();
   };
 
@@ -166,20 +166,25 @@ export default function CowDetailScreen({ route, navigation }: any) {
     } else {
       newTags[tagIndex] = { ...newTags[tagIndex], number: value };
     }
-    updateCow(cow.id, { tags: newTags }).then(loadCow);
+    updateCow(cow.id, { tags: newTags }, ranchId).then(loadCow).catch((e: any) => {
+      if (e?.message?.includes('Tag number already exists')) {
+        Alert.alert('Duplicate Tag', e.message);
+      }
+      loadCow();
+    });
   };
 
   const addNewTag = async () => {
     if (!cow) return;
     const newTags = [...cow.tags, { id: Date.now().toString(36), label: 'ear tag', number: '' }];
-    await updateCow(cow.id, { tags: newTags });
+    await updateCow(cow.id, { tags: newTags }, ranchId);
     loadCow();
   };
 
   const removeTag = async (index: number) => {
     if (!cow || cow.tags.length <= 1) return;
     const newTags = cow.tags.filter((_, i) => i !== index);
-    await updateCow(cow.id, { tags: newTags });
+    await updateCow(cow.id, { tags: newTags }, ranchId);
     loadCow();
   };
 
