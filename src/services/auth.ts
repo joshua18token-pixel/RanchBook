@@ -70,12 +70,32 @@ export async function inviteMember(ranchId: string, email: string, role: 'read' 
   const user = await getCurrentUser();
   if (!user) throw new Error('Not logged in');
 
+  const normalizedEmail = email.toLowerCase();
+
+  // Check if already invited
+  const { data: existing } = await supabase
+    .from('ranch_members')
+    .select('id')
+    .eq('ranch_id', ranchId)
+    .eq('email', normalizedEmail)
+    .maybeSingle();
+
+  if (existing) {
+    // Update existing invite
+    const { data, error } = await supabase
+      .from('ranch_members')
+      .update({ role, invited_by: user.id })
+      .eq('id', existing.id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  // New invite
   const { data, error } = await supabase
     .from('ranch_members')
-    .upsert(
-      { ranch_id: ranchId, email: email.toLowerCase(), role, invited_by: user.id, accepted: false },
-      { onConflict: 'ranch_id,email' }
-    )
+    .insert({ ranch_id: ranchId, email: normalizedEmail, role, invited_by: user.id, accepted: false })
     .select()
     .single();
 
