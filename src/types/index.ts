@@ -31,6 +31,7 @@ export interface Cow {
   birthYear?: number;      // e.g. 2024
   pastureId?: string;      // assigned pasture
   photos?: string[];       // array of local URIs
+  motherTag?: string;      // tag number of mother cow
   notes: CowNote[];
   createdAt: string;
   updatedAt: string;

@@ -1,0 +1,1 @@
+ALTER TABLE cows ADD COLUMN IF NOT EXISTS mother_tag TEXT;

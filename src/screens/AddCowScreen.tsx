@@ -9,9 +9,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Image,
   Modal,
-  FlatList,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { addCow, getAllPastures, addPasture } from '../services/database';
@@ -20,6 +18,7 @@ import { CowStatus, Pasture } from '../types';
 
 const STATUSES: CowStatus[] = ['wet', 'dry', 'bred', 'bull', 'steer', 'cull'];
 const TAG_LABELS = ['ear tag', 'RFID', 'brand', 'other'];
+const COMMON_BREEDS = ['Angus', 'Red Angus', 'Hereford', 'Charolais', 'Simmental', 'Brahman', 'Jersey', 'Holstein', 'Limousin', 'Shorthorn'];
 
 interface TagInput {
   label: string;
@@ -31,6 +30,8 @@ export default function AddCowScreen({ navigation, route }: any) {
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<CowStatus>('wet');
   const [breed, setBreed] = useState('');
+  const [showCustomBreed, setShowCustomBreed] = useState(false);
+  const [customBreed, setCustomBreed] = useState('');
   const [birthMonth, setBirthMonth] = useState('');
   const [birthYear, setBirthYear] = useState('');
   const [tags, setTags] = useState<TagInput[]>([{ label: 'ear tag', number: '' }]);
@@ -39,6 +40,7 @@ export default function AddCowScreen({ navigation, route }: any) {
   const [selectedPasture, setSelectedPasture] = useState<string | undefined>();
   const [showPastureInput, setShowPastureInput] = useState(false);
   const [newPastureName, setNewPastureName] = useState('');
+  const [motherTag, setMotherTag] = useState('');
   const [saving, setSaving] = useState(false);
   const [tagLabelPickerIndex, setTagLabelPickerIndex] = useState<number | null>(null);
 
@@ -102,6 +104,14 @@ export default function AddCowScreen({ navigation, route }: any) {
     setShowPastureInput(false);
   };
 
+  const handleSetCustomBreed = () => {
+    if (customBreed.trim()) {
+      setBreed(customBreed.trim());
+      setShowCustomBreed(false);
+      setCustomBreed('');
+    }
+  };
+
   const handleSave = async () => {
     const validTags = tags.filter(t => t.number.trim());
     if (validTags.length === 0) {
@@ -119,6 +129,7 @@ export default function AddCowScreen({ navigation, route }: any) {
         birthYear: birthYear ? parseInt(birthYear, 10) : undefined,
         pastureId: selectedPasture,
         photos: photos.length > 0 ? photos : undefined,
+        motherTag: motherTag.trim() || undefined,
         tags: validTags.map(t => ({
           id: '',
           label: t.label,
@@ -201,6 +212,15 @@ export default function AddCowScreen({ navigation, route }: any) {
           <Text style={styles.addTagText}>+ Add Another Tag</Text>
         </TouchableOpacity>
 
+        {/* Photos */}
+        <Text style={styles.label}>Photos (optional)</Text>
+        <PhotoViewer
+          photos={photos}
+          onDelete={removePhoto}
+          onAdd={pickPhoto}
+          onCamera={takePhoto}
+        />
+
         {/* Status */}
         <Text style={styles.label}>Status</Text>
         <View style={styles.statusRow}>
@@ -278,14 +298,49 @@ export default function AddCowScreen({ navigation, route }: any) {
 
         {/* Breed */}
         <Text style={styles.label}>Breed (optional)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g. Angus, Hereford..."
-          placeholderTextColor="#999"
-          value={breed}
-          onChangeText={setBreed}
-          autoCorrect={false}
-        />
+        <View style={styles.breedRow}>
+          <TouchableOpacity
+            style={[styles.breedOption, !breed && styles.breedActive]}
+            onPress={() => { setBreed(''); setShowCustomBreed(false); }}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.breedOptionText, !breed && styles.breedActiveText]}>None</Text>
+          </TouchableOpacity>
+          {COMMON_BREEDS.map((b) => (
+            <TouchableOpacity
+              key={b}
+              style={[styles.breedOption, breed === b && styles.breedActive]}
+              onPress={() => { setBreed(b); setShowCustomBreed(false); }}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.breedOptionText, breed === b && styles.breedActiveText]}>{b}</Text>
+            </TouchableOpacity>
+          ))}
+          <TouchableOpacity
+            style={[styles.addPastureBtn, breed && !COMMON_BREEDS.includes(breed) && styles.breedActive]}
+            onPress={() => setShowCustomBreed(!showCustomBreed)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.addPastureBtnText, breed && !COMMON_BREEDS.includes(breed) && styles.breedActiveText]}>
+              {breed && !COMMON_BREEDS.includes(breed) ? breed : '+ Custom'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+        {showCustomBreed && (
+          <View style={styles.newPastureRow}>
+            <TextInput
+              style={[styles.input, { flex: 1, marginRight: 8 }]}
+              placeholder="Custom breed..."
+              placeholderTextColor="#999"
+              value={customBreed}
+              onChangeText={setCustomBreed}
+              autoCorrect={false}
+            />
+            <TouchableOpacity style={styles.addPastureSave} onPress={handleSetCustomBreed} activeOpacity={0.7}>
+              <Text style={styles.addPastureSaveText}>SET</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Birth Date */}
         <Text style={styles.label}>Born (optional)</Text>
@@ -311,13 +366,16 @@ export default function AddCowScreen({ navigation, route }: any) {
           />
         </View>
 
-        {/* Photos */}
-        <Text style={styles.label}>Photos (optional)</Text>
-        <PhotoViewer
-          photos={photos}
-          onDelete={removePhoto}
-          onAdd={pickPhoto}
-          onCamera={takePhoto}
+        {/* Mother Tag */}
+        <Text style={styles.label}>Mother's Tag (optional)</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Tag number of mother cow..."
+          placeholderTextColor="#999"
+          value={motherTag}
+          onChangeText={setMotherTag}
+          autoCorrect={false}
+          autoCapitalize="characters"
         />
 
         {/* Save */}
@@ -439,6 +497,18 @@ const styles = StyleSheet.create({
   pastureActive: { backgroundColor: '#8B4513' },
   pastureOptionText: { fontSize: 14, fontWeight: '600', color: '#666' },
   pastureActiveText: { color: '#fff' },
+  breedRow: { flexDirection: 'row', flexWrap: 'wrap' },
+  breedOption: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: '#e0e0e0',
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  breedActive: { backgroundColor: '#795548' },
+  breedOptionText: { fontSize: 14, fontWeight: '600', color: '#666' },
+  breedActiveText: { color: '#fff' },
   addPastureBtn: {
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -460,38 +530,6 @@ const styles = StyleSheet.create({
   birthRow: { flexDirection: 'row', alignItems: 'center' },
   birthInput: { width: 80, textAlign: 'center' },
   birthSeparator: { fontSize: 24, color: '#666', marginHorizontal: 8 },
-  photoRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 },
-  photoThumb: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    marginRight: 8,
-    marginBottom: 8,
-  },
-  photoRemove: {
-    position: 'absolute',
-    top: -4,
-    right: 4,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#ff5252',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  photoRemoveText: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
-  photoButtons: { flexDirection: 'row' },
-  photoButton: {
-    flex: 1,
-    padding: 14,
-    borderRadius: 10,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    alignItems: 'center',
-    marginRight: 8,
-  },
-  photoButtonText: { fontSize: 16, color: '#333' },
   saveButton: {
     marginTop: 24,
     padding: 18,

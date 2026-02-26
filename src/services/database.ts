@@ -17,6 +17,7 @@ function rowToCow(row: any, tags: any[], notes: any[]): Cow {
     birthYear: row.birth_year || undefined,
     pastureId: row.pasture_id || undefined,
     photos: row.photos || undefined,
+    motherTag: row.mother_tag || undefined,
     tags: tags.map(t => ({ id: t.id, label: t.label, number: t.number })),
     notes: notes.map(n => ({ id: n.id, text: n.text, createdAt: n.created_at })),
     createdAt: row.created_at,
@@ -82,6 +83,7 @@ export async function addCow(
       birth_year: cow.birthYear || null,
       pasture_id: cow.pastureId || null,
       photos: cow.photos || null,
+      mother_tag: cow.motherTag || null,
       ranch_id: ranchId || null,
     })
     .select()
@@ -122,8 +124,9 @@ export async function updateCow(id: string, updates: Partial<Cow>, ranchId?: str
   if (updates.breed !== undefined) dbUpdates.breed = updates.breed || null;
   if (updates.birthMonth !== undefined) dbUpdates.birth_month = updates.birthMonth || null;
   if (updates.birthYear !== undefined) dbUpdates.birth_year = updates.birthYear || null;
-  if (updates.pastureId !== undefined) dbUpdates.pasture_id = updates.pastureId || null;
+  if (updates.pastureId !== undefined) dbUpdates.pasture_id = updates.pastureId ? updates.pastureId : null;
   if (updates.photos !== undefined) dbUpdates.photos = updates.photos || null;
+  if (updates.motherTag !== undefined) dbUpdates.mother_tag = updates.motherTag || null;
 
   const { error } = await supabase.from('cows').update(dbUpdates).eq('id', id);
   if (error) throw error;
@@ -219,6 +222,33 @@ export async function deleteCow(id: string): Promise<boolean> {
   const { error } = await supabase.from('cows').delete().eq('id', id);
   if (error) throw error;
   return true;
+}
+
+// ── Lineage helpers ──
+
+export async function getCowByTag(tagNumber: string, ranchId: string): Promise<Cow | null> {
+  const { data: tagRows } = await supabase
+    .from('tags')
+    .select('cow_id')
+    .eq('ranch_id', ranchId)
+    .eq('number', tagNumber);
+  if (!tagRows || tagRows.length === 0) return null;
+  const cowId = tagRows[0].cow_id;
+  const all = await getAllCows(ranchId);
+  return all.find(c => c.id === cowId) || null;
+}
+
+export async function getCalves(tagNumbers: string[], ranchId: string): Promise<Cow[]> {
+  if (tagNumbers.length === 0) return [];
+  const { data: cowRows } = await supabase
+    .from('cows')
+    .select('id')
+    .eq('ranch_id', ranchId)
+    .in('mother_tag', tagNumbers);
+  if (!cowRows || cowRows.length === 0) return [];
+  const all = await getAllCows(ranchId);
+  const calfIds = new Set(cowRows.map(c => c.id));
+  return all.filter(c => calfIds.has(c.id));
 }
 
 // ── Pastures (Supabase) ──

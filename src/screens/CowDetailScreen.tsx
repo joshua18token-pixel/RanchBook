@@ -9,17 +9,17 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Image,
   Modal,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect } from '@react-navigation/native';
-import { getAllCows, updateCow, addNote, deleteCow, getAllPastures, addPasture } from '../services/database';
+import { getAllCows, updateCow, addNote, deleteCow, getAllPastures, addPasture, getCowByTag, getCalves } from '../services/database';
 import PhotoViewer from '../components/PhotoViewer';
 import { Cow, CowStatus, Pasture } from '../types';
 
 const STATUSES: CowStatus[] = ['wet', 'dry', 'bred', 'bull', 'steer', 'cull'];
 const TAG_LABELS = ['ear tag', 'RFID', 'brand', 'other'];
+const COMMON_BREEDS = ['Angus', 'Red Angus', 'Hereford', 'Charolais', 'Simmental', 'Brahman', 'Jersey', 'Holstein', 'Limousin', 'Shorthorn'];
 
 const STATUS_COLORS: Record<CowStatus, string> = {
   wet: '#4CAF50',
@@ -39,18 +39,25 @@ export default function CowDetailScreen({ route, navigation }: any) {
   const [showPasturePicker, setShowPasturePicker] = useState(false);
   const [showPastureInput, setShowPastureInput] = useState(false);
   const [newPastureName, setNewPastureName] = useState('');
+  const [showBreedPicker, setShowBreedPicker] = useState(false);
+  const [showCustomBreed, setShowCustomBreed] = useState(false);
+  const [customBreedInput, setCustomBreedInput] = useState('');
 
   // Editable fields
   const [editingField, setEditingField] = useState<string | null>(null);
-
   const [editDescription, setEditDescription] = useState('');
-  const [editBreed, setEditBreed] = useState('');
   const [editBirthMonth, setEditBirthMonth] = useState('');
   const [editBirthYear, setEditBirthYear] = useState('');
+  const [editMotherTag, setEditMotherTag] = useState('');
+
+  // Tags (local editing with save button)
   const [tagLabelPickerIndex, setTagLabelPickerIndex] = useState<number | null>(null);
   const [editTags, setEditTags] = useState<{ id: string; label: string; number: string }[]>([]);
   const [tagsChanged, setTagsChanged] = useState(false);
   const [savingTags, setSavingTags] = useState(false);
+
+  // Lineage
+  const [calves, setCalves] = useState<Cow[]>([]);
 
   const loadCow = useCallback(async () => {
     const all = await getAllCows(ranchId);
@@ -58,13 +65,20 @@ export default function CowDetailScreen({ route, navigation }: any) {
     setCow(found || null);
     if (found) {
       setEditDescription(found.description || '');
-      setEditBreed(found.breed || '');
       setEditBirthMonth(found.birthMonth ? String(found.birthMonth) : '');
       setEditBirthYear(found.birthYear ? String(found.birthYear) : '');
+      setEditMotherTag(found.motherTag || '');
       setEditTags(found.tags.map(t => ({ id: t.id, label: t.label, number: t.number })));
       setTagsChanged(false);
+      // Load calves
+      const tagNums = found.tags.map(t => t.number).filter(n => n);
+      if (tagNums.length > 0) {
+        getCalves(tagNums, ranchId).then(setCalves).catch(() => setCalves([]));
+      } else {
+        setCalves([]);
+      }
     }
-  }, [cowId]);
+  }, [cowId, ranchId]);
 
   useEffect(() => {
     getAllPastures(ranchId).then(setPastures);
@@ -80,13 +94,12 @@ export default function CowDetailScreen({ route, navigation }: any) {
     if (!cow) return;
     const updates: Partial<Cow> = {};
     switch (field) {
-
       case 'description': updates.description = editDescription.trim() || undefined; break;
-      case 'breed': updates.breed = editBreed.trim() || undefined; break;
       case 'born':
         updates.birthMonth = editBirthMonth ? parseInt(editBirthMonth, 10) : undefined;
         updates.birthYear = editBirthYear ? parseInt(editBirthYear, 10) : undefined;
         break;
+      case 'motherTag': updates.motherTag = editMotherTag.trim() || undefined; break;
     }
     await updateCow(cow.id, updates, ranchId);
     setEditingField(null);
@@ -102,9 +115,24 @@ export default function CowDetailScreen({ route, navigation }: any) {
 
   const handlePastureChange = async (pastureId: string | undefined) => {
     if (!cow) return;
-    await updateCow(cow.id, { pastureId }, ranchId);
+    await updateCow(cow.id, { pastureId: pastureId || undefined }, ranchId);
     setShowPasturePicker(false);
     loadCow();
+  };
+
+  const handleBreedChange = async (newBreed: string) => {
+    if (!cow) return;
+    await updateCow(cow.id, { breed: newBreed || undefined }, ranchId);
+    setShowBreedPicker(false);
+    setShowCustomBreed(false);
+    loadCow();
+  };
+
+  const handleSetCustomBreed = async () => {
+    if (customBreedInput.trim()) {
+      await handleBreedChange(customBreedInput.trim());
+      setCustomBreedInput('');
+    }
   };
 
   const handleAddPasture = async () => {
@@ -161,7 +189,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
     loadCow();
   };
 
-  // Edit tags — local only until Save
+  // Tag editing (local state with Save button)
   const handleEditTag = (tagIndex: number, field: 'label' | 'number', value: string) => {
     const newTags = [...editTags];
     newTags[tagIndex] = { ...newTags[tagIndex], [field]: value };
@@ -182,14 +210,12 @@ export default function CowDetailScreen({ route, navigation }: any) {
 
   const saveTags = async () => {
     if (!cow) return;
-    // Validate: no empty tag numbers
     const validTags = editTags.filter(t => t.number.trim() !== '');
     if (validTags.length === 0) {
       Alert.alert('Error', 'At least one tag must have a number.');
       return;
     }
-    const emptyCount = editTags.length - validTags.length;
-    if (emptyCount > 0) {
+    if (editTags.some(t => t.number.trim() === '')) {
       Alert.alert('Error', 'Remove or fill in empty tags before saving.');
       return;
     }
@@ -211,20 +237,11 @@ export default function CowDetailScreen({ route, navigation }: any) {
             navigation.push('CowDetail', { cowId: dupeCowId, ranchId, myRole });
           }
         } else {
-          Alert.alert(
-            'Duplicate Tag',
-            `Tag "${dupeNumber}" is already assigned to another cow on this ranch.`,
-            [
-              { text: 'Cancel', style: 'cancel' },
-              {
-                text: 'Go to that cow',
-                onPress: () => navigation.push('CowDetail', { cowId: dupeCowId, ranchId, myRole }),
-              },
-            ]
-          );
+          Alert.alert('Duplicate Tag', `Tag "${dupeNumber}" is already assigned to another cow.`, [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Go to that cow', onPress: () => navigation.push('CowDetail', { cowId: dupeCowId, ranchId, myRole }) },
+          ]);
         }
-      } else if (e?.message?.includes('Tag number already exists')) {
-        Alert.alert('Duplicate Tag', e.message);
       } else {
         Alert.alert('Error', 'Failed to save tags. Try again.');
       }
@@ -237,6 +254,15 @@ export default function CowDetailScreen({ route, navigation }: any) {
     if (cow) {
       setEditTags(cow.tags.map(t => ({ id: t.id, label: t.label, number: t.number })));
       setTagsChanged(false);
+    }
+  };
+
+  const navigateToCow = async (tagNumber: string) => {
+    const found = await getCowByTag(tagNumber, ranchId);
+    if (found) {
+      navigation.push('CowDetail', { cowId: found.id, ranchId, myRole });
+    } else {
+      Alert.alert('Not Found', `No cow found with tag "${tagNumber}" on this ranch.`);
     }
   };
 
@@ -312,6 +338,56 @@ export default function CowDetailScreen({ route, navigation }: any) {
           </View>
         )}
 
+        {/* Tags — moved up */}
+        <Text style={styles.sectionTitle}>Tags</Text>
+        {editTags.map((tag, i) => (
+          <View key={tag.id || i} style={styles.tagRow}>
+            <TouchableOpacity
+              style={styles.tagLabelBadge}
+              onPress={() => setTagLabelPickerIndex(i)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.tagLabelText}>{tag.label} ▼</Text>
+            </TouchableOpacity>
+            <TextInput
+              style={styles.tagNumberInput}
+              value={tag.number}
+              onChangeText={(v) => handleEditTag(i, 'number', v)}
+              placeholder="Tag number"
+              placeholderTextColor="#999"
+              autoCapitalize="characters"
+              autoCorrect={false}
+            />
+            {editTags.length > 1 && (
+              <TouchableOpacity style={styles.tagRemove} onPress={() => removeTagLocal(i)}>
+                <Text style={styles.tagRemoveText}>✕</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        ))}
+        <TouchableOpacity style={styles.addTagBtn} onPress={addNewTag} activeOpacity={0.7}>
+          <Text style={styles.addTagBtnText}>+ Add Tag</Text>
+        </TouchableOpacity>
+        {tagsChanged && (
+          <View style={styles.tagActions}>
+            <TouchableOpacity style={styles.tagSaveBtn} onPress={saveTags} disabled={savingTags} activeOpacity={0.7}>
+              <Text style={styles.tagSaveBtnText}>{savingTags ? 'SAVING...' : 'SAVE TAGS'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.tagCancelBtn} onPress={cancelTagEdits} activeOpacity={0.7}>
+              <Text style={styles.tagCancelBtnText}>CANCEL</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Photos — moved up */}
+        <Text style={styles.sectionTitle}>Photos ({(cow.photos || []).length})</Text>
+        <PhotoViewer
+          photos={cow.photos || []}
+          onDelete={removePhoto}
+          onAdd={pickPhoto}
+          onCamera={takePhoto}
+        />
+
         {/* Pasture */}
         <TouchableOpacity
           style={styles.infoRow}
@@ -325,7 +401,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
         {showPasturePicker && (
           <View style={styles.pickerRow}>
             <TouchableOpacity
-              style={[styles.pickerOption, { backgroundColor: '#9E9E9E' }]}
+              style={[styles.pickerOption, { backgroundColor: !cow.pastureId ? '#2D5016' : '#9E9E9E' }]}
               onPress={() => handlePastureChange(undefined)}
               activeOpacity={0.7}
             >
@@ -334,7 +410,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
             {pastures.map((p) => (
               <TouchableOpacity
                 key={p.id}
-                style={[styles.pickerOption, { backgroundColor: '#8B4513' }]}
+                style={[styles.pickerOption, { backgroundColor: cow.pastureId === p.id ? '#2D5016' : '#8B4513' }]}
                 onPress={() => handlePastureChange(p.id)}
                 activeOpacity={0.7}
               >
@@ -390,26 +466,60 @@ export default function CowDetailScreen({ route, navigation }: any) {
           </TouchableOpacity>
         )}
 
-        {/* Breed */}
-        {editingField === 'breed' ? (
+        {/* Breed — button picker */}
+        <TouchableOpacity
+          style={styles.infoRow}
+          onPress={() => setShowBreedPicker(!showBreedPicker)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.infoLabel}>Breed</Text>
+          <Text style={styles.infoValue}>{cow.breed || 'None'} ▼</Text>
+        </TouchableOpacity>
+
+        {showBreedPicker && (
+          <View style={styles.pickerRow}>
+            <TouchableOpacity
+              style={[styles.pickerOption, { backgroundColor: !cow.breed ? '#2D5016' : '#9E9E9E' }]}
+              onPress={() => handleBreedChange('')}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.pickerOptionText}>None</Text>
+            </TouchableOpacity>
+            {COMMON_BREEDS.map((b) => (
+              <TouchableOpacity
+                key={b}
+                style={[styles.pickerOption, { backgroundColor: cow.breed === b ? '#2D5016' : '#795548' }]}
+                onPress={() => handleBreedChange(b)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.pickerOptionText}>{b}</Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={[styles.pickerOption, { backgroundColor: '#fff', borderWidth: 2, borderColor: '#795548' }]}
+              onPress={() => setShowCustomBreed(!showCustomBreed)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.pickerOptionText, { color: '#795548' }]}>
+                {cow.breed && !COMMON_BREEDS.includes(cow.breed) ? cow.breed : '+ Custom'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        {showCustomBreed && (
           <View style={styles.editRow}>
             <TextInput
               style={[styles.editInput, { flex: 1 }]}
-              value={editBreed}
-              onChangeText={setEditBreed}
-              placeholder="Breed..."
+              placeholder="Custom breed..."
               placeholderTextColor="#999"
+              value={customBreedInput}
+              onChangeText={setCustomBreedInput}
               autoFocus
             />
-            <TouchableOpacity style={styles.editSave} onPress={() => saveField('breed')}>
-              <Text style={styles.editSaveText}>✓</Text>
+            <TouchableOpacity style={styles.editSave} onPress={handleSetCustomBreed}>
+              <Text style={styles.editSaveText}>SET</Text>
             </TouchableOpacity>
           </View>
-        ) : (
-          <TouchableOpacity style={styles.infoRow} onPress={() => setEditingField('breed')}>
-            <Text style={styles.infoLabel}>Breed</Text>
-            <Text style={styles.infoValue}>{cow.breed || 'Tap to set'}</Text>
-          </TouchableOpacity>
         )}
 
         {/* Birth Date */}
@@ -450,55 +560,56 @@ export default function CowDetailScreen({ route, navigation }: any) {
           </TouchableOpacity>
         )}
 
-        {/* Tags */}
-        <Text style={styles.sectionTitle}>Tags</Text>
-        {editTags.map((tag, i) => (
-          <View key={tag.id || i} style={styles.tagRow}>
-            <TouchableOpacity
-              style={styles.tagLabelBadge}
-              onPress={() => setTagLabelPickerIndex(i)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.tagLabelText}>{tag.label} ▼</Text>
-            </TouchableOpacity>
+        {/* Mother (Lineage) */}
+        {editingField === 'motherTag' ? (
+          <View style={styles.editRow}>
             <TextInput
-              style={styles.tagNumberInput}
-              value={tag.number}
-              onChangeText={(v) => handleEditTag(i, 'number', v)}
-              placeholder="Tag number"
+              style={[styles.editInput, { flex: 1 }]}
+              value={editMotherTag}
+              onChangeText={setEditMotherTag}
+              placeholder="Mother's tag number..."
               placeholderTextColor="#999"
               autoCapitalize="characters"
               autoCorrect={false}
+              autoFocus
             />
-            {editTags.length > 1 && (
-              <TouchableOpacity style={styles.tagRemove} onPress={() => removeTagLocal(i)}>
-                <Text style={styles.tagRemoveText}>✕</Text>
+            <TouchableOpacity style={styles.editSave} onPress={() => saveField('motherTag')}>
+              <Text style={styles.editSaveText}>✓</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity style={styles.infoRow} onPress={() => setEditingField('motherTag')}>
+            <Text style={styles.infoLabel}>Mother</Text>
+            {cow.motherTag ? (
+              <TouchableOpacity onPress={() => navigateToCow(cow.motherTag!)}>
+                <Text style={styles.linkText}>🐄 {cow.motherTag} →</Text>
               </TouchableOpacity>
+            ) : (
+              <Text style={styles.infoValue}>Tap to set</Text>
             )}
-          </View>
-        ))}
-        <TouchableOpacity style={styles.addTagBtn} onPress={addNewTag} activeOpacity={0.7}>
-          <Text style={styles.addTagBtnText}>+ Add Tag</Text>
-        </TouchableOpacity>
-        {tagsChanged && (
-          <View style={styles.tagActions}>
-            <TouchableOpacity style={styles.tagSaveBtn} onPress={saveTags} disabled={savingTags} activeOpacity={0.7}>
-              <Text style={styles.tagSaveBtnText}>{savingTags ? 'SAVING...' : 'SAVE TAGS'}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.tagCancelBtn} onPress={cancelTagEdits} activeOpacity={0.7}>
-              <Text style={styles.tagCancelBtnText}>CANCEL</Text>
-            </TouchableOpacity>
-          </View>
+          </TouchableOpacity>
         )}
 
-        {/* Photos */}
-        <Text style={styles.sectionTitle}>Photos ({(cow.photos || []).length})</Text>
-        <PhotoViewer
-          photos={cow.photos || []}
-          onDelete={removePhoto}
-          onAdd={pickPhoto}
-          onCamera={takePhoto}
-        />
+        {/* Calves */}
+        {calves.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>Calves ({calves.length})</Text>
+            {calves.map((calf) => (
+              <TouchableOpacity
+                key={calf.id}
+                style={styles.calfRow}
+                onPress={() => navigation.push('CowDetail', { cowId: calf.id, ranchId, myRole })}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.calfTag}>🐄 {calf.tags[0]?.number || 'No Tag'}</Text>
+                <Text style={styles.calfInfo}>
+                  {calf.status.toUpperCase()} {calf.breed ? `• ${calf.breed}` : ''}
+                </Text>
+                <Text style={styles.calfArrow}>→</Text>
+              </TouchableOpacity>
+            ))}
+          </>
+        )}
 
         {/* Notes */}
         <Text style={styles.sectionTitle}>Notes ({cow.notes.length})</Text>
@@ -539,6 +650,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
           <Text style={styles.deleteText}>DELETE COW</Text>
         </TouchableOpacity>
       </ScrollView>
+
       {/* Tag Label Picker Modal */}
       <Modal visible={tagLabelPickerIndex !== null} transparent animationType="fade">
         <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setTagLabelPickerIndex(null)}>
@@ -599,6 +711,7 @@ const styles = StyleSheet.create({
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 14,
     backgroundColor: '#fff',
     borderRadius: 10,
@@ -606,6 +719,7 @@ const styles = StyleSheet.create({
   },
   infoLabel: { fontSize: 16, color: '#666' },
   infoValue: { fontSize: 16, fontWeight: '600', color: '#333' },
+  linkText: { fontSize: 16, fontWeight: '600', color: '#2D5016', textDecorationLine: 'underline' },
   descriptionCard: {
     padding: 14,
     backgroundColor: '#fff',
@@ -703,38 +817,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   tagCancelBtnText: { color: '#666', fontWeight: 'bold', fontSize: 16 },
-  photoGrid: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 },
-  photo: {
-    width: 100,
-    height: 100,
-    borderRadius: 10,
-    marginRight: 8,
-    marginBottom: 8,
-  },
-  photoRemoveBadge: {
-    position: 'absolute',
-    top: -4,
-    right: 4,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#ff5252',
+  calfRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  photoRemoveText: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
-  photoButtons: { flexDirection: 'row', marginBottom: 8 },
-  photoBtn: {
-    flex: 1,
     padding: 14,
-    borderRadius: 10,
     backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    alignItems: 'center',
-    marginRight: 8,
+    borderRadius: 10,
+    marginBottom: 6,
+    borderLeftWidth: 4,
+    borderLeftColor: '#4CAF50',
   },
-  photoBtnText: { fontSize: 16, color: '#333' },
+  calfTag: { fontSize: 18, fontWeight: 'bold', color: '#2D5016', flex: 1 },
+  calfInfo: { fontSize: 14, color: '#666', marginRight: 8 },
+  calfArrow: { fontSize: 18, color: '#2D5016' },
   addNoteRow: { flexDirection: 'row', marginBottom: 12 },
   noteInput: {
     flex: 1,
