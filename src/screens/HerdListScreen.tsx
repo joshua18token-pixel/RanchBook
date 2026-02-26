@@ -11,7 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { getAllCows, searchCows, getAllPastures } from '../services/database';
+import { getAllCows, searchCows, getAllPastures, searchCowsByMedical } from '../services/database';
 import { exportToExcelAndEmail } from '../services/export';
 import { Cow, CowStatus, Pasture } from '../types';
 
@@ -78,7 +78,20 @@ export default function HerdListScreen({ navigation, route }: any) {
         return cowDate >= range.from && cowDate <= range.to;
       }));
     } else {
-      setCows(await searchCows(query, ranchId));
+      // Search both regular fields and medical issues
+      const regularResults = await searchCows(query, ranchId);
+      const medicalCowIds = await searchCowsByMedical(query, ranchId);
+      if (medicalCowIds.length > 0) {
+        const all = await getAllCows(ranchId);
+        const medicalCows = all.filter(c => medicalCowIds.includes(c.id));
+        const merged = [...regularResults];
+        medicalCows.forEach(mc => {
+          if (!merged.find(c => c.id === mc.id)) merged.push(mc);
+        });
+        setCows(merged);
+      } else {
+        setCows(regularResults);
+      }
     }
   }, [query]);
 

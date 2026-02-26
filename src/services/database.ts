@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { Cow, CowNote, Tag, Pasture } from '../types';
+import { Cow, CowNote, Tag, Pasture, MedicalIssue } from '../types';
 
 function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).substring(2, 10);
@@ -18,6 +18,7 @@ function rowToCow(row: any, tags: any[], notes: any[]): Cow {
     pastureId: row.pasture_id || undefined,
     photos: row.photos || undefined,
     motherTag: row.mother_tag || undefined,
+    medicalIssues: [],
     tags: tags.map(t => ({ id: t.id, label: t.label, number: t.number })),
     notes: notes.map(n => ({ id: n.id, text: n.text, createdAt: n.created_at })),
     createdAt: row.created_at,
@@ -249,6 +250,44 @@ export async function getCalves(tagNumbers: string[], ranchId: string): Promise<
   const all = await getAllCows(ranchId);
   const calfIds = new Set(cowRows.map(c => c.id));
   return all.filter(c => calfIds.has(c.id));
+}
+
+// ── Medical Issues ──
+
+export async function getMedicalIssues(cowId: string): Promise<MedicalIssue[]> {
+  const { data, error } = await supabase
+    .from('medical_issues')
+    .select('*')
+    .eq('cow_id', cowId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data || []).map(m => ({ id: m.id, label: m.label, createdAt: m.created_at }));
+}
+
+export async function addMedicalIssue(cowId: string, label: string, ranchId: string): Promise<MedicalIssue> {
+  const { data: userData } = await supabase.auth.getUser();
+  const { data, error } = await supabase
+    .from('medical_issues')
+    .insert({ cow_id: cowId, label, ranch_id: ranchId, created_by: userData?.user?.id || null })
+    .select()
+    .single();
+  if (error) throw error;
+  return { id: data.id, label: data.label, createdAt: data.created_at };
+}
+
+export async function removeMedicalIssue(id: string): Promise<void> {
+  const { error } = await supabase.from('medical_issues').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function searchCowsByMedical(query: string, ranchId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('medical_issues')
+    .select('cow_id')
+    .eq('ranch_id', ranchId)
+    .ilike('label', `%${query}%`);
+  if (error) throw error;
+  return [...new Set((data || []).map(m => m.cow_id))];
 }
 
 // ── Ranch Breeds ──

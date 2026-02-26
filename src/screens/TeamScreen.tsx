@@ -52,41 +52,55 @@ export default function TeamScreen({ route }: any) {
   };
 
   const handleChangeRole = (member: any) => {
-    if (member.role === 'manager') return; // Can't change manager role
+    if (member.role === 'manager') return;
     const newRole = member.role === 'write' ? 'read' : 'write';
-    Alert.alert(
-      'Change Role',
-      `Change ${member.email} from ${member.role} to ${newRole}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: `Set ${newRole.toUpperCase()}`,
-          onPress: async () => {
-            await updateMemberRole(member.id, newRole);
-            loadMembers();
+    if (Platform.OS === 'web') {
+      if (window.confirm(`Change ${member.email} from ${member.role} to ${newRole}?`)) {
+        await updateMemberRole(member.id, newRole);
+        loadMembers();
+      }
+    } else {
+      Alert.alert(
+        'Change Role',
+        `Change ${member.email} from ${member.role} to ${newRole}?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: `Set ${newRole.toUpperCase()}`,
+            onPress: async () => {
+              await updateMemberRole(member.id, newRole);
+              loadMembers();
+            },
           },
-        },
-      ]
-    );
+        ]
+      );
+    }
   };
 
-  const handleRemove = (member: any) => {
+  const handleRemove = async (member: any) => {
     if (member.role === 'manager') return;
-    Alert.alert(
-      'Remove Member',
-      `Remove ${member.email} from this ranch?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: async () => {
-            await removeMember(member.id);
-            loadMembers();
+    if (Platform.OS === 'web') {
+      if (window.confirm(`Remove ${member.email} from this ranch?`)) {
+        await removeMember(member.id);
+        loadMembers();
+      }
+    } else {
+      Alert.alert(
+        'Remove Member',
+        `Remove ${member.email} from this ranch?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Remove',
+            style: 'destructive',
+            onPress: async () => {
+              await removeMember(member.id);
+              loadMembers();
+            },
           },
-        },
-      ]
-    );
+        ]
+      );
+    }
   };
 
   const ROLE_COLORS: Record<string, string> = {

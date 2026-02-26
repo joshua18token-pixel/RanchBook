@@ -13,7 +13,8 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect } from '@react-navigation/native';
-import { getAllCows, updateCow, addNote, deleteCow, getAllPastures, addPasture, getCowByTag, getCalves, getRanchBreeds, addRanchBreed, removeRanchBreed } from '../services/database';
+import { getAllCows, updateCow, addNote, deleteCow, getAllPastures, addPasture, getCowByTag, getCalves, getRanchBreeds, addRanchBreed, removeRanchBreed, getMedicalIssues, addMedicalIssue, removeMedicalIssue } from '../services/database';
+import { MedicalIssue } from '../types';
 import PhotoViewer from '../components/PhotoViewer';
 import { Cow, CowStatus, Pasture } from '../types';
 
@@ -56,6 +57,10 @@ export default function CowDetailScreen({ route, navigation }: any) {
   const [tagsChanged, setTagsChanged] = useState(false);
   const [savingTags, setSavingTags] = useState(false);
 
+  // Medical issues
+  const [medicalIssues, setMedicalIssues] = useState<MedicalIssue[]>([]);
+  const [newMedicalLabel, setNewMedicalLabel] = useState('');
+
   // Breeds
   const [ranchBreeds, setRanchBreeds] = useState<{ id: string; name: string }[]>([]);
 
@@ -73,6 +78,8 @@ export default function CowDetailScreen({ route, navigation }: any) {
       setEditMotherTag(found.motherTag || '');
       setEditTags(found.tags.map(t => ({ id: t.id, label: t.label, number: t.number })));
       setTagsChanged(false);
+      // Load medical issues
+      getMedicalIssues(found.id).then(setMedicalIssues).catch(() => setMedicalIssues([]));
       // Load calves
       const tagNums = found.tags.map(t => t.number).filter(n => n);
       if (tagNums.length > 0) {
@@ -182,6 +189,28 @@ export default function CowDetailScreen({ route, navigation }: any) {
     await addNote(cow.id, noteText.trim());
     setNoteText('');
     loadCow();
+  };
+
+  const handleAddMedical = async () => {
+    if (!cow || !newMedicalLabel.trim()) return;
+    await addMedicalIssue(cow.id, newMedicalLabel.trim(), ranchId);
+    setNewMedicalLabel('');
+    getMedicalIssues(cow.id).then(setMedicalIssues);
+  };
+
+  const handleRemoveMedical = async (issueId: string, label: string) => {
+    const doRemove = Platform.OS === 'web'
+      ? window.confirm(`Remove "${label}" from medical watch?`)
+      : await new Promise<boolean>(resolve => {
+          Alert.alert('Remove Issue', `Remove "${label}"?`, [
+            { text: 'Cancel', onPress: () => resolve(false) },
+            { text: 'Remove', style: 'destructive', onPress: () => resolve(true) },
+          ]);
+        });
+    if (doRemove) {
+      await removeMedicalIssue(issueId);
+      if (cow) getMedicalIssues(cow.id).then(setMedicalIssues);
+    }
   };
 
   const pickPhoto = async () => {
@@ -472,6 +501,46 @@ export default function CowDetailScreen({ route, navigation }: any) {
             </TouchableOpacity>
           </View>
         )}
+
+        {/* Medical Watch Issues */}
+        <Text style={styles.sectionTitle}>🏥 Medical Watch</Text>
+        {medicalIssues.length > 0 ? (
+          <View style={styles.medicalRow}>
+            {medicalIssues.map((issue) => (
+              <TouchableOpacity
+                key={issue.id}
+                style={styles.medicalTag}
+                onPress={() => handleRemoveMedical(issue.id, issue.label)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.medicalTagLabel}>{issue.label}</Text>
+                <Text style={styles.medicalTagDate}>
+                  {new Date(issue.createdAt).toLocaleDateString()}
+                </Text>
+                <Text style={styles.medicalTagRemove}>✕</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : (
+          <Text style={styles.noMedical}>No medical issues tracked</Text>
+        )}
+        <View style={styles.addMedicalRow}>
+          <TextInput
+            style={[styles.editInput, { flex: 1 }]}
+            value={newMedicalLabel}
+            onChangeText={setNewMedicalLabel}
+            placeholder="Add issue (e.g. prolapse, bad hip)..."
+            placeholderTextColor="#999"
+            autoCorrect={false}
+          />
+          <TouchableOpacity
+            style={[styles.editSave, !newMedicalLabel.trim() && { opacity: 0.4 }]}
+            onPress={handleAddMedical}
+            disabled={!newMedicalLabel.trim()}
+          >
+            <Text style={styles.editSaveText}>ADD</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Description */}
         {editingField === 'description' ? (
@@ -858,6 +927,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   tagCancelBtnText: { color: '#666', fontWeight: 'bold', fontSize: 16 },
+  medicalRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 },
+  medicalTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFEBEE',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginRight: 8,
+    marginBottom: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#D32F2F',
+  },
+  medicalTagLabel: { fontSize: 14, fontWeight: 'bold', color: '#D32F2F', marginRight: 8 },
+  medicalTagDate: { fontSize: 11, color: '#999', marginRight: 8 },
+  medicalTagRemove: { fontSize: 14, color: '#D32F2F', fontWeight: 'bold' },
+  noMedical: { fontSize: 14, color: '#999', fontStyle: 'italic', marginBottom: 8 },
+  addMedicalRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   breedRemoveBtn: {
     width: 24,
     height: 24,

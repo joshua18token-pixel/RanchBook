@@ -12,6 +12,12 @@ export interface CowNote {
   createdAt: string; // ISO date
 }
 
+export interface MedicalIssue {
+  id: string;
+  label: string;
+  createdAt: string; // ISO date
+}
+
 export type CowStatus = 'wet' | 'dry' | 'bred' | 'bull' | 'steer' | 'cull';
 
 export interface Pasture {
@@ -32,6 +38,7 @@ export interface Cow {
   pastureId?: string;      // assigned pasture
   photos?: string[];       // array of local URIs
   motherTag?: string;      // tag number of mother cow
+  medicalIssues: MedicalIssue[];
   notes: CowNote[];
   createdAt: string;
   updatedAt: string;

@@ -12,7 +12,7 @@ import {
   Modal,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { addCow, getAllPastures, addPasture, getRanchBreeds, addRanchBreed } from '../services/database';
+import { addCow, getAllPastures, addPasture, getRanchBreeds, addRanchBreed, addMedicalIssue } from '../services/database';
 import PhotoViewer from '../components/PhotoViewer';
 import { CowStatus, Pasture } from '../types';
 
@@ -41,6 +41,8 @@ export default function AddCowScreen({ navigation, route }: any) {
   const [showPastureInput, setShowPastureInput] = useState(false);
   const [newPastureName, setNewPastureName] = useState('');
   const [motherTag, setMotherTag] = useState('');
+  const [medicalLabels, setMedicalLabels] = useState<string[]>([]);
+  const [newMedicalInput, setNewMedicalInput] = useState('');
   const [saving, setSaving] = useState(false);
   const [tagLabelPickerIndex, setTagLabelPickerIndex] = useState<number | null>(null);
   const [ranchBreeds, setRanchBreeds] = useState<string[]>([]);
@@ -149,7 +151,21 @@ export default function AddCowScreen({ navigation, route }: any) {
           label: t.label,
           number: t.number.trim(),
         })),
+        medicalIssues: [],
       }, ranchId);
+
+      // Add medical issues after cow is created
+      if (medicalLabels.length > 0) {
+        // Get the cow ID from the most recent cow
+        const allCows = await (await import('../services/database')).getAllCows(ranchId);
+        const newCow = allCows.find(c => c.tags.some(t => validTags.some(vt => vt.number.trim() === t.number)));
+        if (newCow) {
+          for (const label of medicalLabels) {
+            await addMedicalIssue(newCow.id, label, ranchId);
+          }
+        }
+      }
+
       navigation.goBack();
     } catch (e: any) {
       if (e?.message?.startsWith('DUPLICATE_TAG:')) {
@@ -297,6 +313,46 @@ export default function AddCowScreen({ navigation, route }: any) {
             </TouchableOpacity>
           </View>
         )}
+
+        {/* Medical Watch */}
+        <Text style={styles.label}>🏥 Medical Watch (optional)</Text>
+        {medicalLabels.length > 0 && (
+          <View style={styles.medicalRow}>
+            {medicalLabels.map((label, i) => (
+              <TouchableOpacity
+                key={i}
+                style={styles.medicalTag}
+                onPress={() => setMedicalLabels(medicalLabels.filter((_, idx) => idx !== i))}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.medicalTagLabel}>{label}</Text>
+                <Text style={styles.medicalTagRemove}>✕</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+        <View style={styles.addMedicalRow}>
+          <TextInput
+            style={[styles.input, { flex: 1, marginRight: 8 }]}
+            value={newMedicalInput}
+            onChangeText={setNewMedicalInput}
+            placeholder="Add issue (e.g. prolapse, bad hip)..."
+            placeholderTextColor="#999"
+            autoCorrect={false}
+          />
+          <TouchableOpacity
+            style={[styles.addPastureSave, !newMedicalInput.trim() && { opacity: 0.4 }]}
+            onPress={() => {
+              if (newMedicalInput.trim()) {
+                setMedicalLabels([...medicalLabels, newMedicalInput.trim()]);
+                setNewMedicalInput('');
+              }
+            }}
+            disabled={!newMedicalInput.trim()}
+          >
+            <Text style={styles.addPastureSaveText}>ADD</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Description */}
         <Text style={styles.label}>Description (optional)</Text>
@@ -511,6 +567,22 @@ const styles = StyleSheet.create({
   pastureActive: { backgroundColor: '#8B4513' },
   pastureOptionText: { fontSize: 14, fontWeight: '600', color: '#666' },
   pastureActiveText: { color: '#fff' },
+  medicalRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 },
+  medicalTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFEBEE',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginRight: 8,
+    marginBottom: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#D32F2F',
+  },
+  medicalTagLabel: { fontSize: 14, fontWeight: 'bold', color: '#D32F2F', marginRight: 8 },
+  medicalTagRemove: { fontSize: 14, color: '#D32F2F', fontWeight: 'bold' },
+  addMedicalRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   breedRow: { flexDirection: 'row', flexWrap: 'wrap' },
   breedOption: {
     paddingHorizontal: 14,
