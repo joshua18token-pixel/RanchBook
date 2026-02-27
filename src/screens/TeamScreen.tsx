@@ -9,8 +9,22 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Modal,
 } from 'react-native';
-import { getRanchMembers, inviteMember, updateMemberRole, removeMember, transferManager } from '../services/auth';
+import { getRanchMembers, inviteMember, updateMemberRole, removeMember } from '../services/auth';
+import { supabase } from '../services/supabase';
+
+const ROLE_LABELS: Record<string, string> = {
+  manager: 'Manager',
+  write: 'Read & Write',
+  read: 'Read Only',
+};
+
+const ROLE_COLORS: Record<string, string> = {
+  manager: '#2D5016',
+  write: '#1976D2',
+  read: '#9E9E9E',
+};
 
 export default function TeamScreen({ route }: any) {
   const { ranchId, myRole } = route.params;
@@ -19,6 +33,7 @@ export default function TeamScreen({ route }: any) {
   const [inviteRole, setInviteRole] = useState<'read' | 'write'>('read');
   const [loading, setLoading] = useState(false);
   const isManager = myRole === 'manager';
+  const [rolePickerMember, setRolePickerMember] = useState<any>(null);
 
   useEffect(() => {
     loadMembers();
@@ -35,120 +50,95 @@ export default function TeamScreen({ route }: any) {
 
   const handleInvite = async () => {
     if (!email.trim()) {
-      Alert.alert('Enter Email', 'Enter the email address to invite.');
+      if (Platform.OS === 'web') {
+        window.alert('Enter the email address to invite.');
+      } else {
+        Alert.alert('Enter Email', 'Enter the email address to invite.');
+      }
       return;
     }
     setLoading(true);
     try {
       await inviteMember(ranchId, email.trim(), inviteRole);
-      Alert.alert('Invited!', `${email.trim()} has been invited with ${inviteRole} access. They need to create an account with this email to see the ranch.`);
+      if (Platform.OS === 'web') {
+        window.alert(`${email.trim()} has been invited with ${ROLE_LABELS[inviteRole]} access.`);
+      } else {
+        Alert.alert('Invited!', `${email.trim()} has been invited with ${ROLE_LABELS[inviteRole]} access.`);
+      }
       setEmail('');
       loadMembers();
     } catch (e: any) {
-      Alert.alert('Error', e.message || 'Failed to invite');
+      if (Platform.OS === 'web') {
+        window.alert(e.message || 'Failed to invite');
+      } else {
+        Alert.alert('Error', e.message || 'Failed to invite');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChangeRole = async (member: any) => {
-    if (member.role === 'manager') return;
-    const newRole = member.role === 'write' ? 'read' : 'write';
-    if (Platform.OS === 'web') {
-      if (window.confirm(`Change ${member.email} from ${member.role} to ${newRole}?`)) {
-        await updateMemberRole(member.id, newRole);
-        loadMembers();
+  const handleSetRole = async (member: any, newRole: string) => {
+    setRolePickerMember(null);
+
+    if (newRole === member.role) return;
+
+    // Promoting to manager
+    if (newRole === 'manager') {
+      const { error } = await supabase
+        .from('ranch_members')
+        .update({ role: 'manager' })
+        .eq('id', member.id);
+      if (error) {
+        const msg = error.message || 'Failed to update role';
+        Platform.OS === 'web' ? window.alert(msg) : Alert.alert('Error', msg);
+        return;
       }
     } else {
-      Alert.alert(
-        'Change Role',
-        `Change ${member.email} from ${member.role} to ${newRole}?`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: `Set ${newRole.toUpperCase()}`,
-            onPress: async () => {
-              await updateMemberRole(member.id, newRole);
-              loadMembers();
-            },
-          },
-        ]
-      );
+      // Demoting — make sure we're not removing the last manager
+      if (member.role === 'manager') {
+        const managerCount = members.filter(m => m.role === 'manager').length;
+        if (managerCount <= 1) {
+          const msg = 'Cannot demote the last manager. Promote someone else first.';
+          Platform.OS === 'web' ? window.alert(msg) : Alert.alert('Cannot Demote', msg);
+          return;
+        }
+      }
+      await updateMemberRole(member.id, newRole as 'read' | 'write');
     }
+    loadMembers();
   };
 
   const handleRemove = async (member: any) => {
-    if (member.role === 'manager') return;
-    if (Platform.OS === 'web') {
-      if (window.confirm(`Remove ${member.email} from this ranch?`)) {
+    // Don't allow removing the last manager
+    if (member.role === 'manager') {
+      const managerCount = members.filter(m => m.role === 'manager').length;
+      if (managerCount <= 1) {
+        const msg = 'Cannot remove the last manager.';
+        Platform.OS === 'web' ? window.alert(msg) : Alert.alert('Cannot Remove', msg);
+        return;
+      }
+    }
+
+    const doRemove = async () => {
+      try {
         await removeMember(member.id);
         loadMembers();
-      }
-    } else {
-      Alert.alert(
-        'Remove Member',
-        `Remove ${member.email} from this ranch?`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Remove',
-            style: 'destructive',
-            onPress: async () => {
-              await removeMember(member.id);
-              loadMembers();
-            },
-          },
-        ]
-      );
-    }
-  };
-
-  const handleTransferManager = async (member: any) => {
-    if (!member.accepted || !member.user_id) {
-      if (Platform.OS === 'web') {
-        window.alert('That member needs to accept their invite and sign in first.');
-      } else {
-        Alert.alert('Not Ready', 'That member needs to accept their invite and sign in first.');
-      }
-      return;
-    }
-
-    const confirmMsg = `Transfer Manager role to ${member.email}?\n\nThis will make them the ranch owner and demote you to Read & Write. This cannot be undone by you.`;
-
-    const doTransfer = async () => {
-      try {
-        await transferManager(ranchId, member.id);
-        if (Platform.OS === 'web') {
-          window.alert('Manager role transferred! You are now Read & Write.');
-        } else {
-          Alert.alert('Done', 'Manager role transferred! You are now Read & Write.');
-        }
-        loadMembers();
       } catch (e: any) {
-        if (Platform.OS === 'web') {
-          window.alert(e.message || 'Transfer failed');
-        } else {
-          Alert.alert('Error', e.message || 'Transfer failed');
-        }
+        Platform.OS === 'web' ? window.alert(e.message || 'Failed') : Alert.alert('Error', e.message || 'Failed');
       }
     };
 
     if (Platform.OS === 'web') {
-      if (window.confirm(confirmMsg)) {
-        await doTransfer();
+      if (window.confirm(`Remove ${member.email} from this ranch?`)) {
+        await doRemove();
       }
     } else {
-      Alert.alert('Transfer Manager', confirmMsg, [
+      Alert.alert('Remove Member', `Remove ${member.email} from this ranch?`, [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Transfer', style: 'destructive', onPress: doTransfer },
+        { text: 'Remove', style: 'destructive', onPress: doRemove },
       ]);
     }
-  };
-
-  const ROLE_COLORS: Record<string, string> = {
-    manager: '#2D5016',
-    write: '#1976D2',
-    read: '#9E9E9E',
   };
 
   return (
@@ -160,7 +150,6 @@ export default function TeamScreen({ route }: any) {
       <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>Team Members</Text>
 
-        {/* Member list */}
         {members.map((m) => (
           <View key={m.id} style={styles.memberCard}>
             <View style={styles.memberInfo}>
@@ -172,23 +161,14 @@ export default function TeamScreen({ route }: any) {
             <View style={styles.memberActions}>
               <TouchableOpacity
                 style={[styles.roleBadge, { backgroundColor: ROLE_COLORS[m.role] || '#999' }]}
-                onPress={() => isManager && handleChangeRole(m)}
-                activeOpacity={isManager && m.role !== 'manager' ? 0.7 : 1}
+                onPress={() => isManager ? setRolePickerMember(m) : null}
+                activeOpacity={isManager ? 0.7 : 1}
               >
                 <Text style={styles.roleText}>
-                  {m.role.toUpperCase()}{isManager && m.role !== 'manager' ? ' ▼' : ''}
+                  {ROLE_LABELS[m.role] || m.role.toUpperCase()}{isManager ? ' ▼' : ''}
                 </Text>
               </TouchableOpacity>
-              {isManager && m.role !== 'manager' && m.accepted && (
-                <TouchableOpacity
-                  style={styles.transferBtn}
-                  onPress={() => handleTransferManager(m)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.transferBtnText}>👑</Text>
-                </TouchableOpacity>
-              )}
-              {isManager && m.role !== 'manager' && (
+              {isManager && (
                 <TouchableOpacity
                   style={styles.removeBtn}
                   onPress={() => handleRemove(m)}
@@ -200,6 +180,51 @@ export default function TeamScreen({ route }: any) {
             </View>
           </View>
         ))}
+
+        {/* Role picker modal */}
+        <Modal visible={!!rolePickerMember} transparent animationType="fade">
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setRolePickerMember(null)}
+          >
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Change Role</Text>
+              <Text style={styles.modalSubtitle}>{rolePickerMember?.email}</Text>
+
+              {(['manager', 'write', 'read'] as const).map((role) => {
+                const isCurrentRole = rolePickerMember?.role === role;
+                return (
+                  <TouchableOpacity
+                    key={role}
+                    style={[styles.rolePickerOption, isCurrentRole && styles.rolePickerCurrent]}
+                    onPress={() => handleSetRole(rolePickerMember, role)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.rolePickerDot, { backgroundColor: ROLE_COLORS[role] }]} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.rolePickerLabel, isCurrentRole && { fontWeight: 'bold' }]}>
+                        {ROLE_LABELS[role]}{isCurrentRole ? ' (current)' : ''}
+                      </Text>
+                      <Text style={styles.rolePickerDesc}>
+                        {role === 'manager' && 'Full access: manage team, settings, and herd'}
+                        {role === 'write' && 'Can view and edit herd data'}
+                        {role === 'read' && 'Can only view herd data'}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+
+              <TouchableOpacity
+                style={styles.modalCancel}
+                onPress={() => setRolePickerMember(null)}
+              >
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </Modal>
 
         {/* Invite section - managers only */}
         {isManager && (
@@ -253,7 +278,7 @@ export default function TeamScreen({ route }: any) {
         {!isManager && (
           <View style={styles.infoBox}>
             <Text style={styles.infoText}>
-              Only the Ranch Manager can invite or manage team members.
+              Only Ranch Managers can invite or manage team members.
             </Text>
           </View>
         )}
@@ -286,16 +311,6 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   roleText: { color: '#fff', fontWeight: 'bold', fontSize: 12 },
-  transferBtn: {
-    marginLeft: 8,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#FFA000',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  transferBtnText: { fontSize: 16 },
   removeBtn: {
     marginLeft: 8,
     width: 36,
@@ -306,6 +321,50 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   removeBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    width: '90%',
+    maxWidth: 400,
+  },
+  modalTitle: { fontSize: 20, fontWeight: 'bold', color: '#2D5016', marginBottom: 4 },
+  modalSubtitle: { fontSize: 14, color: '#666', marginBottom: 20 },
+  rolePickerOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 10,
+    marginBottom: 8,
+    backgroundColor: '#f5f5f5',
+  },
+  rolePickerCurrent: {
+    backgroundColor: '#E8F5E9',
+    borderWidth: 2,
+    borderColor: '#2D5016',
+  },
+  rolePickerDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    marginRight: 12,
+  },
+  rolePickerLabel: { fontSize: 16, color: '#333' },
+  rolePickerDesc: { fontSize: 12, color: '#888', marginTop: 2 },
+  modalCancel: {
+    padding: 14,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  modalCancelText: { fontSize: 16, color: '#999' },
+  // Invite section
   inviteSection: { marginTop: 24 },
   sectionTitle: { fontSize: 18, fontWeight: '600', color: '#2D5016', marginBottom: 12 },
   input: {

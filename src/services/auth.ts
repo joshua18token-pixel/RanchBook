@@ -127,7 +127,7 @@ export async function inviteMember(ranchId: string, email: string, role: 'read' 
   return data;
 }
 
-export async function updateMemberRole(memberId: string, role: 'read' | 'write') {
+export async function updateMemberRole(memberId: string, role: 'read' | 'write' | 'manager') {
   const { error } = await supabase
     .from('ranch_members')
     .update({ role })
