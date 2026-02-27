@@ -135,22 +135,29 @@ export default function App() {
     } }}>
     <NavigationContainer key={`nav-${ranchId}-${navKey}`} linking={linking} documentTitle={{ formatter: (options) => options?.title ? `${options.title} | RanchBook` : 'RanchBook' }}>
       <Stack.Navigator
-        screenOptions={{ headerStyle, headerTintColor, headerTitleStyle }}
+        screenOptions={{
+          headerStyle,
+          headerTintColor,
+          headerTitleStyle,
+          headerRight: () => (
+            <Text style={{ color: '#C5A55A', fontSize: 13, fontWeight: '600', marginRight: 12, opacity: 0.7 }}>RanchBook.io</Text>
+          ),
+        }}
       >
         <Stack.Screen
           name="HerdList"
           component={HerdListScreen}
-          options={{ title: '🐂 RanchBook' }}
+          options={{ title: ranchName || 'RanchBook' }}
           initialParams={{ ranchId, myRole, ranchName }}
         />
         <Stack.Screen
           name="AddCow"
           component={AddCowScreen}
           options={({ navigation }) => ({
-            title: 'Add Cow',
+            title: `${ranchName}: Add Cow`,
             ...(Platform.OS === 'web' ? { headerLeft: () => (
               <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 12 }}>
-                <Text style={{ color: '#FFF8E7', fontSize: 18 }}>← Back</Text>
+                <Text style={{ color: '#C5A55A', fontSize: 18 }}>← Back</Text>
               </TouchableOpacity>
             )} : {}),
           })}
@@ -160,10 +167,10 @@ export default function App() {
           name="CowDetail"
           component={CowDetailScreen}
           options={({ navigation }) => ({
-            title: 'Cow Details',
+            title: `${ranchName}: Cow Details`,
             ...(Platform.OS === 'web' ? { headerLeft: () => (
               <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 12 }}>
-                <Text style={{ color: '#FFF8E7', fontSize: 18 }}>← Back</Text>
+                <Text style={{ color: '#C5A55A', fontSize: 18 }}>← Back</Text>
               </TouchableOpacity>
             )} : {}),
           })}
@@ -173,10 +180,10 @@ export default function App() {
           name="Team"
           component={TeamScreen}
           options={({ navigation }) => ({
-            title: 'Team',
+            title: `${ranchName}: Team`,
             ...(Platform.OS === 'web' ? { headerLeft: () => (
               <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 12 }}>
-                <Text style={{ color: '#FFF8E7', fontSize: 18 }}>← Back</Text>
+                <Text style={{ color: '#C5A55A', fontSize: 18 }}>← Back</Text>
               </TouchableOpacity>
             )} : {}),
           })}
