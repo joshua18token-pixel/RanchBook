@@ -84,9 +84,11 @@ export async function getMyRanches() {
     .from('ranch_members')
     .select('id, ranch_id, role, ranches(id, name, owner_id)')
     .eq('user_id', user.id)
-    .eq('accepted', true);
+    .eq('accepted', true)
+    .order('created_at', { ascending: true });
 
   if (error) throw error;
+  console.log('getMyRanches result:', JSON.stringify(data));
   return data;
 }
 
