@@ -93,13 +93,17 @@ export default function App() {
     return (
       <RanchSetupScreen
         onRanchSelected={(id, role, name) => {
+          // Clear URL params so stale ranch data doesn't persist
+          if (typeof window !== 'undefined' && window.history?.replaceState) {
+            window.history.replaceState({}, '', '/');
+          }
           setNavKey(k => k + 1); // Force navigation stack reset
           setRanchId(id);
           setMyRole(role);
           setRanchName(name || 'Ranch');
           setAppState('app');
         }}
-        onLogout={() => setAppState('login')}
+        onLogout={() => setAppState('login')
       />
     );
   }
@@ -117,7 +121,12 @@ export default function App() {
   };
 
   return (
-    <AppContext.Provider value={{ switchToRanchSelect: () => setAppState('ranch_select') }}>
+    <AppContext.Provider value={{ switchToRanchSelect: () => {
+      if (typeof window !== 'undefined' && window.history?.replaceState) {
+        window.history.replaceState({}, '', '/');
+      }
+      setAppState('ranch_select');
+    } }}>
     <NavigationContainer key={`nav-${ranchId}-${navKey}`} linking={linking} documentTitle={{ formatter: (options) => options?.title ? `${options.title} | RanchBook` : 'RanchBook' }}>
       <Stack.Navigator
         screenOptions={{ headerStyle, headerTintColor, headerTitleStyle }}
