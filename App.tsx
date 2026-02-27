@@ -103,7 +103,7 @@ export default function App() {
           setRanchName(name || 'Ranch');
           setAppState('app');
         }}
-        onLogout={() => setAppState('login')
+        onLogout={() => setAppState('login')}
       />
     );
   }
