@@ -468,7 +468,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
         {showPasturePicker && (
           <View style={styles.pickerRow}>
             <TouchableOpacity
-              style={[styles.pickerOption, { backgroundColor: !cow.pastureId ? '#2D5016' : '#9E9E9E' }]}
+              style={[styles.pickerOption, { backgroundColor: !cow.pastureId ? '#1A1A1A' : '#9E9E9E' }]}
               onPress={() => handlePastureChange(null)}
               activeOpacity={0.7}
             >
@@ -477,7 +477,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
             {pastures.map((p) => (
               <TouchableOpacity
                 key={p.id}
-                style={[styles.pickerOption, { backgroundColor: cow.pastureId === p.id ? '#2D5016' : '#8B4513' }]}
+                style={[styles.pickerOption, { backgroundColor: cow.pastureId === p.id ? '#1A1A1A' : '#C5A55A' }]}
                 onPress={() => handlePastureChange(p.id)}
                 activeOpacity={0.7}
               >
@@ -485,11 +485,11 @@ export default function CowDetailScreen({ route, navigation }: any) {
               </TouchableOpacity>
             ))}
             <TouchableOpacity
-              style={[styles.pickerOption, { backgroundColor: '#fff', borderWidth: 2, borderColor: '#8B4513' }]}
+              style={[styles.pickerOption, { backgroundColor: '#fff', borderWidth: 2, borderColor: '#C5A55A' }]}
               onPress={() => setShowPastureInput(!showPastureInput)}
               activeOpacity={0.7}
             >
-              <Text style={[styles.pickerOptionText, { color: '#8B4513' }]}>+ New</Text>
+              <Text style={[styles.pickerOptionText, { color: '#C5A55A' }]}>+ New</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -603,7 +603,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
         {showBreedPicker && (
           <View style={styles.pickerRow}>
             <TouchableOpacity
-              style={[styles.pickerOption, { backgroundColor: !cow.breed ? '#2D5016' : '#9E9E9E' }]}
+              style={[styles.pickerOption, { backgroundColor: !cow.breed ? '#1A1A1A' : '#9E9E9E' }]}
               onPress={() => handleBreedChange('')}
               activeOpacity={0.7}
             >
@@ -612,7 +612,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
             {ranchBreeds.map((b) => (
               <View key={b.id} style={{ flexDirection: 'row', alignItems: 'center', marginRight: 8, marginBottom: 8 }}>
                 <TouchableOpacity
-                  style={[styles.pickerOption, { backgroundColor: cow.breed === b.name ? '#2D5016' : '#795548', marginRight: 0, marginBottom: 0 }]}
+                  style={[styles.pickerOption, { backgroundColor: cow.breed === b.name ? '#1A1A1A' : '#795548', marginRight: 0, marginBottom: 0 }]}
                   onPress={() => handleBreedChange(b.name)}
                   activeOpacity={0.7}
                 >
@@ -820,7 +820,7 @@ export default function CowDetailScreen({ route, navigation }: any) {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  container: { flex: 1, backgroundColor: '#FFF8E7' },
+  container: { flex: 1, backgroundColor: '#F5F5F0' },
   content: { padding: 16, paddingBottom: 60 },
   header: {
     flexDirection: 'row',
@@ -828,7 +828,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  cowName: { fontSize: 28, fontWeight: 'bold', color: '#2D5016' },
+  cowName: { fontSize: 28, fontWeight: 'bold', color: '#1A1A1A' },
   statusBadgeLarge: { paddingHorizontal: 18, paddingVertical: 12, borderRadius: 10 },
   statusBadgeText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
   pickerRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 12 },
@@ -853,14 +853,14 @@ const styles = StyleSheet.create({
   },
   infoLabel: { fontSize: 16, color: '#666' },
   infoValue: { fontSize: 16, fontWeight: '600', color: '#333' },
-  linkText: { fontSize: 16, fontWeight: '600', color: '#2D5016', textDecorationLine: 'underline' },
+  linkText: { fontSize: 16, fontWeight: '600', color: '#1A1A1A', textDecorationLine: 'underline' },
   descriptionCard: {
     padding: 14,
     backgroundColor: '#fff',
     borderRadius: 10,
     marginBottom: 8,
     borderLeftWidth: 4,
-    borderLeftColor: '#8B4513',
+    borderLeftColor: '#C5A55A',
     minHeight: 50,
   },
   descriptionText: { fontSize: 16, color: '#333', lineHeight: 22 },
@@ -871,12 +871,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#2D5016',
+    borderColor: '#1A1A1A',
     color: '#333',
     marginRight: 8,
   },
   editSave: {
-    backgroundColor: '#2D5016',
+    backgroundColor: '#1A1A1A',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 10,
@@ -886,7 +886,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#2D5016',
+    color: '#1A1A1A',
     marginTop: 20,
     marginBottom: 10,
   },
@@ -899,7 +899,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   tagLabelBadge: {
-    backgroundColor: '#8B4513',
+    backgroundColor: '#C5A55A',
     paddingHorizontal: 10,
     paddingVertical: 8,
     borderRadius: 6,
@@ -927,18 +927,18 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#2D5016',
+    borderColor: '#1A1A1A',
     borderStyle: 'dashed',
     alignItems: 'center',
     marginBottom: 8,
   },
-  addTagBtnText: { fontSize: 14, color: '#2D5016', fontWeight: '600' },
+  addTagBtnText: { fontSize: 14, color: '#1A1A1A', fontWeight: '600' },
   tagActions: { flexDirection: 'row', marginTop: 8, marginBottom: 8 },
   tagSaveBtn: {
     flex: 1,
     padding: 14,
     borderRadius: 10,
-    backgroundColor: '#2D5016',
+    backgroundColor: '#1A1A1A',
     alignItems: 'center',
     marginRight: 8,
   },
@@ -1002,9 +1002,9 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     borderLeftColor: '#4CAF50',
   },
-  calfTag: { fontSize: 18, fontWeight: 'bold', color: '#2D5016', flex: 1 },
+  calfTag: { fontSize: 18, fontWeight: 'bold', color: '#1A1A1A', flex: 1 },
   calfInfo: { fontSize: 14, color: '#666', marginRight: 8 },
-  calfArrow: { fontSize: 18, color: '#2D5016' },
+  calfArrow: { fontSize: 18, color: '#1A1A1A' },
   addNoteRow: { flexDirection: 'row', marginBottom: 12 },
   noteInput: {
     flex: 1,
@@ -1019,7 +1019,7 @@ const styles = StyleSheet.create({
     minHeight: 50,
   },
   addNoteButton: {
-    backgroundColor: '#2D5016',
+    backgroundColor: '#1A1A1A',
     paddingHorizontal: 20,
     borderRadius: 10,
     alignItems: 'center',
@@ -1033,7 +1033,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 8,
     borderLeftWidth: 4,
-    borderLeftColor: '#2D5016',
+    borderLeftColor: '#1A1A1A',
   },
   noteText: { fontSize: 16, color: '#333', lineHeight: 22 },
   noteDate: { fontSize: 12, color: '#999', marginTop: 6 },
@@ -1054,7 +1054,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#FFF8E7',
+    backgroundColor: '#F5F5F0',
     borderRadius: 16,
     padding: 20,
     width: 260,
@@ -1062,7 +1062,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2D5016',
+    color: '#1A1A1A',
     marginBottom: 12,
     textAlign: 'center',
   },
@@ -1076,8 +1076,8 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
   },
   modalOptionActive: {
-    backgroundColor: '#8B4513',
-    borderColor: '#8B4513',
+    backgroundColor: '#C5A55A',
+    borderColor: '#C5A55A',
   },
   modalOptionText: {
     fontSize: 18,

@@ -21,7 +21,7 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 const ROLE_COLORS: Record<string, string> = {
-  manager: '#2D5016',
+  manager: '#1A1A1A',
   write: '#1976D2',
   read: '#9E9E9E',
 };
@@ -289,9 +289,9 @@ export default function TeamScreen({ route }: any) {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  container: { flex: 1, backgroundColor: '#FFF8E7' },
+  container: { flex: 1, backgroundColor: '#F5F5F0' },
   content: { padding: 16, paddingBottom: 40 },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#2D5016', marginBottom: 16 },
+  title: { fontSize: 24, fontWeight: 'bold', color: '#1A1A1A', marginBottom: 16 },
   memberCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
     width: '90%',
     maxWidth: 400,
   },
-  modalTitle: { fontSize: 20, fontWeight: 'bold', color: '#2D5016', marginBottom: 4 },
+  modalTitle: { fontSize: 20, fontWeight: 'bold', color: '#1A1A1A', marginBottom: 4 },
   modalSubtitle: { fontSize: 14, color: '#666', marginBottom: 20 },
   rolePickerOption: {
     flexDirection: 'row',
@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
   rolePickerCurrent: {
     backgroundColor: '#E8F5E9',
     borderWidth: 2,
-    borderColor: '#2D5016',
+    borderColor: '#1A1A1A',
   },
   rolePickerDot: {
     width: 14,
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
   modalCancelText: { fontSize: 16, color: '#999' },
   // Invite section
   inviteSection: { marginTop: 24 },
-  sectionTitle: { fontSize: 18, fontWeight: '600', color: '#2D5016', marginBottom: 12 },
+  sectionTitle: { fontSize: 18, fontWeight: '600', color: '#1A1A1A', marginBottom: 12 },
   input: {
     padding: 16,
     fontSize: 18,
@@ -386,14 +386,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 8,
   },
-  roleSelected: { backgroundColor: '#2D5016' },
+  roleSelected: { backgroundColor: '#1A1A1A', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 },
   roleOptionText: { fontSize: 14, fontWeight: 'bold', color: '#666' },
   roleSelectedText: { color: '#fff' },
   roleDesc: { fontSize: 11, color: '#999', marginTop: 4 },
   inviteBtn: {
     padding: 18,
     borderRadius: 12,
-    backgroundColor: '#8B4513',
+    backgroundColor: '#C5A55A',
     alignItems: 'center',
   },
   inviteBtnDisabled: { opacity: 0.6 },

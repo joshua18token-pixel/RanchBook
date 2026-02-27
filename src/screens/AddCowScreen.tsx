@@ -210,262 +210,277 @@ export default function AddCowScreen({ navigation, route }: any) {
     >
       <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {/* Tags - most important, at the top */}
-        <Text style={styles.label}>Tags</Text>
-        {tags.map((tag, index) => (
-          <View key={index} style={styles.tagRow}>
-            <TouchableOpacity
-              style={styles.tagLabelButton}
-              onPress={() => setTagLabelPickerIndex(index)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.tagLabelText}>{tag.label} ▼</Text>
-            </TouchableOpacity>
-            <TextInput
-              style={styles.tagInput}
-              placeholder="Tag number"
-              placeholderTextColor="#999"
-              value={tag.number}
-              onChangeText={(v) => updateTag(index, 'number', v)}
-              autoCorrect={false}
-              autoCapitalize="characters"
-            />
-            {tags.length > 1 && (
+        <View style={styles.card}>
+          <Text style={styles.label}>Tags</Text>
+          {tags.map((tag, index) => (
+            <View key={index} style={styles.tagRow}>
               <TouchableOpacity
-                style={styles.removeTag}
-                onPress={() => removeTag(index)}
+                style={styles.tagLabelButton}
+                onPress={() => setTagLabelPickerIndex(index)}
                 activeOpacity={0.7}
               >
-                <Text style={styles.removeTagText}>✕</Text>
+                <Text style={styles.tagLabelText}>{tag.label} ▼</Text>
               </TouchableOpacity>
-            )}
-          </View>
-        ))}
-        <TouchableOpacity style={styles.addTagButton} onPress={addTagRow} activeOpacity={0.7}>
-          <Text style={styles.addTagText}>+ Add Another Tag</Text>
-        </TouchableOpacity>
+              <TextInput
+                style={styles.tagInput}
+                placeholder="Tag number"
+                placeholderTextColor="#999"
+                value={tag.number}
+                onChangeText={(v) => updateTag(index, 'number', v)}
+                autoCorrect={false}
+                autoCapitalize="characters"
+              />
+              {tags.length > 1 && (
+                <TouchableOpacity
+                  style={styles.removeTag}
+                  onPress={() => removeTag(index)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.removeTagText}>✕</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          ))}
+          <TouchableOpacity style={styles.addTagButton} onPress={addTagRow} activeOpacity={0.7}>
+            <Text style={styles.addTagText}>+ Add Another Tag</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Photos */}
-        <Text style={styles.label}>Photos (optional)</Text>
-        <PhotoViewer
-          photos={photos}
-          onDelete={removePhoto}
-          onAdd={pickPhoto}
-          onCamera={takePhoto}
-        />
+        <View style={styles.card}>
+          <Text style={styles.label}>Photos (optional)</Text>
+          <PhotoViewer
+            photos={photos}
+            onDelete={removePhoto}
+            onAdd={pickPhoto}
+            onCamera={takePhoto}
+          />
+        </View>
 
         {/* Status */}
-        <Text style={styles.label}>Status</Text>
-        <View style={styles.statusRow}>
-          {STATUSES.map((s) => (
-            <TouchableOpacity
-              key={s}
-              style={[styles.statusButton, status === s && styles.statusActive]}
-              onPress={() => setStatus(s)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.statusButtonText, status === s && styles.statusActiveText]}>
-                {s.toUpperCase()}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Pasture */}
-        <Text style={styles.label}>Pasture (optional)</Text>
-        <View style={styles.pastureRow}>
-          <TouchableOpacity
-            style={[styles.pastureOption, !selectedPasture && styles.pastureActive]}
-            onPress={() => setSelectedPasture(undefined)}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.pastureOptionText, !selectedPasture && styles.pastureActiveText]}>None</Text>
-          </TouchableOpacity>
-          {pastures.map((p) => (
-            <TouchableOpacity
-              key={p.id}
-              style={[styles.pastureOption, selectedPasture === p.id && styles.pastureActive]}
-              onPress={() => setSelectedPasture(p.id)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.pastureOptionText, selectedPasture === p.id && styles.pastureActiveText]}>
-                {p.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-          <TouchableOpacity
-            style={styles.addPastureBtn}
-            onPress={() => setShowPastureInput(!showPastureInput)}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.addPastureBtnText}>+ New</Text>
-          </TouchableOpacity>
-        </View>
-        {showPastureInput && (
-          <View style={styles.newPastureRow}>
-            <TextInput
-              style={[styles.input, { flex: 1, marginRight: 8 }]}
-              placeholder="Pasture name..."
-              placeholderTextColor="#999"
-              value={newPastureName}
-              onChangeText={setNewPastureName}
-              autoCorrect={false}
-            />
-            <TouchableOpacity style={styles.addPastureSave} onPress={handleAddPasture} activeOpacity={0.7}>
-              <Text style={styles.addPastureSaveText}>ADD</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Medical Watch */}
-        <Text style={styles.label}>🏥 Medical Watch (optional)</Text>
-        {medicalLabels.length > 0 && (
-          <View style={styles.medicalRow}>
-            {medicalLabels.map((label, i) => (
+        <View style={styles.card}>
+          <Text style={styles.label}>Status</Text>
+          <View style={styles.statusRow}>
+            {STATUSES.map((s) => (
               <TouchableOpacity
-                key={i}
-                style={styles.medicalTag}
-                onPress={() => setMedicalLabels(medicalLabels.filter((_, idx) => idx !== i))}
+                key={s}
+                style={[styles.statusButton, status === s && styles.statusActive]}
+                onPress={() => setStatus(s)}
                 activeOpacity={0.7}
               >
-                <Text style={styles.medicalTagLabel}>{label}</Text>
-                <Text style={styles.medicalTagRemove}>✕</Text>
+                <Text style={[styles.statusButtonText, status === s && styles.statusActiveText]}>
+                  {s.toUpperCase()}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
-        )}
-        {/* Medical presets from ranch */}
-        {medicalPresets.filter(p => !medicalLabels.includes(p.label)).length > 0 && (
-          <View style={styles.medicalPresetsRow}>
-            {medicalPresets
-              .filter(p => !medicalLabels.includes(p.label))
-              .map(preset => (
+        </View>
+
+        {/* Pasture */}
+        <View style={styles.card}>
+          <Text style={styles.label}>Pasture (optional)</Text>
+          <View style={styles.pastureRow}>
+            <TouchableOpacity
+              style={[styles.pastureOption, !selectedPasture && styles.pastureActive]}
+              onPress={() => setSelectedPasture(undefined)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.pastureOptionText, !selectedPasture && styles.pastureActiveText]}>None</Text>
+            </TouchableOpacity>
+            {pastures.map((p) => (
+              <TouchableOpacity
+                key={p.id}
+                style={[styles.pastureOption, selectedPasture === p.id && styles.pastureActive]}
+                onPress={() => setSelectedPasture(p.id)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.pastureOptionText, selectedPasture === p.id && styles.pastureActiveText]}>
+                  {p.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={styles.addPastureBtn}
+              onPress={() => setShowPastureInput(!showPastureInput)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.addPastureBtnText}>+ New</Text>
+            </TouchableOpacity>
+          </View>
+          {showPastureInput && (
+            <View style={styles.newPastureRow}>
+              <TextInput
+                style={[styles.input, { flex: 1, marginRight: 8 }]}
+                placeholder="Pasture name..."
+                placeholderTextColor="#999"
+                value={newPastureName}
+                onChangeText={setNewPastureName}
+                autoCorrect={false}
+              />
+              <TouchableOpacity style={styles.addPastureSave} onPress={handleAddPasture} activeOpacity={0.7}>
+                <Text style={styles.addPastureSaveText}>ADD</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+
+        {/* Medical Watch */}
+        <View style={styles.card}>
+          <Text style={styles.label}>🏥 Medical Watch (optional)</Text>
+          {medicalLabels.length > 0 && (
+            <View style={styles.medicalRow}>
+              {medicalLabels.map((label, i) => (
                 <TouchableOpacity
-                  key={preset.id}
-                  style={styles.medicalPresetBtn}
-                  onPress={() => setMedicalLabels([...medicalLabels, preset.label])}
+                  key={i}
+                  style={styles.medicalTag}
+                  onPress={() => setMedicalLabels(medicalLabels.filter((_, idx) => idx !== i))}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.medicalPresetText}>+ {preset.label}</Text>
+                  <Text style={styles.medicalTagLabel}>{label}</Text>
+                  <Text style={styles.medicalTagRemove}>✕</Text>
                 </TouchableOpacity>
               ))}
+            </View>
+          )}
+          {/* Medical presets from ranch */}
+          {medicalPresets.filter(p => !medicalLabels.includes(p.label)).length > 0 && (
+            <View style={styles.medicalPresetsRow}>
+              {medicalPresets
+                .filter(p => !medicalLabels.includes(p.label))
+                .map(preset => (
+                  <TouchableOpacity
+                    key={preset.id}
+                    style={styles.medicalPresetBtn}
+                    onPress={() => setMedicalLabels([...medicalLabels, preset.label])}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.medicalPresetText}>+ {preset.label}</Text>
+                  </TouchableOpacity>
+                ))}
+            </View>
+          )}
+          <View style={styles.addMedicalRow}>
+            <TextInput
+              style={[styles.input, { flex: 1, marginRight: 8 }]}
+              value={newMedicalInput}
+              onChangeText={setNewMedicalInput}
+              placeholder="Add issue (e.g. prolapse, bad hip)..."
+              placeholderTextColor="#999"
+              autoCorrect={false}
+            />
+            <TouchableOpacity
+              style={[styles.addPastureSave, !newMedicalInput.trim() && { opacity: 0.4 }]}
+              onPress={() => {
+                if (newMedicalInput.trim()) {
+                  setMedicalLabels([...medicalLabels, newMedicalInput.trim()]);
+                  setNewMedicalInput('');
+                }
+              }}
+              disabled={!newMedicalInput.trim()}
+            >
+              <Text style={styles.addPastureSaveText}>ADD</Text>
+            </TouchableOpacity>
           </View>
-        )}
-        <View style={styles.addMedicalRow}>
-          <TextInput
-            style={[styles.input, { flex: 1, marginRight: 8 }]}
-            value={newMedicalInput}
-            onChangeText={setNewMedicalInput}
-            placeholder="Add issue (e.g. prolapse, bad hip)..."
-            placeholderTextColor="#999"
-            autoCorrect={false}
-          />
-          <TouchableOpacity
-            style={[styles.addPastureSave, !newMedicalInput.trim() && { opacity: 0.4 }]}
-            onPress={() => {
-              if (newMedicalInput.trim()) {
-                setMedicalLabels([...medicalLabels, newMedicalInput.trim()]);
-                setNewMedicalInput('');
-              }
-            }}
-            disabled={!newMedicalInput.trim()}
-          >
-            <Text style={styles.addPastureSaveText}>ADD</Text>
-          </TouchableOpacity>
         </View>
 
         {/* Description */}
-        <Text style={styles.label}>Description (optional)</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          placeholder="Any notes about this cow..."
-          placeholderTextColor="#999"
-          value={description}
-          onChangeText={setDescription}
-          multiline
-          numberOfLines={3}
-        />
+        <View style={styles.card}>
+          <Text style={styles.label}>Description (optional)</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="Any notes about this cow..."
+            placeholderTextColor="#999"
+            value={description}
+            onChangeText={setDescription}
+            multiline
+            numberOfLines={3}
+          />
+        </View>
 
         {/* Breed */}
-        <Text style={styles.label}>Breed (optional)</Text>
-        <View style={styles.breedRow}>
-          <TouchableOpacity
-            style={[styles.breedOption, !breed && styles.breedActive]}
-            onPress={() => { setBreed(''); setShowCustomBreed(false); }}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.breedOptionText, !breed && styles.breedActiveText]}>None</Text>
-          </TouchableOpacity>
-          {ranchBreeds.map((b) => (
+        <View style={styles.card}>
+          <Text style={styles.label}>Breed (optional)</Text>
+          <View style={styles.breedRow}>
             <TouchableOpacity
-              key={b}
-              style={[styles.breedOption, breed === b && styles.breedActive]}
-              onPress={() => { setBreed(b); setShowCustomBreed(false); }}
+              style={[styles.breedOption, !breed && styles.breedActive]}
+              onPress={() => { setBreed(''); setShowCustomBreed(false); }}
               activeOpacity={0.7}
             >
-              <Text style={[styles.breedOptionText, breed === b && styles.breedActiveText]}>{b}</Text>
+              <Text style={[styles.breedOptionText, !breed && styles.breedActiveText]}>None</Text>
             </TouchableOpacity>
-          ))}
-          <TouchableOpacity
-            style={[styles.addPastureBtn, breed && !ranchBreeds.includes(breed) && styles.breedActive]}
-            onPress={() => setShowCustomBreed(!showCustomBreed)}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.addPastureBtnText, breed && !ranchBreeds.includes(breed) && styles.breedActiveText]}>
-              {breed && !ranchBreeds.includes(breed) ? breed : '+ Custom'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-        {showCustomBreed && (
-          <View style={styles.newPastureRow}>
-            <TextInput
-              style={[styles.input, { flex: 1, marginRight: 8 }]}
-              placeholder="Custom breed..."
-              placeholderTextColor="#999"
-              value={customBreed}
-              onChangeText={setCustomBreed}
-              autoCorrect={false}
-            />
-            <TouchableOpacity style={styles.addPastureSave} onPress={handleSetCustomBreed} activeOpacity={0.7}>
-              <Text style={styles.addPastureSaveText}>SET</Text>
+            {ranchBreeds.map((b) => (
+              <TouchableOpacity
+                key={b}
+                style={[styles.breedOption, breed === b && styles.breedActive]}
+                onPress={() => { setBreed(b); setShowCustomBreed(false); }}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.breedOptionText, breed === b && styles.breedActiveText]}>{b}</Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={[styles.addPastureBtn, breed && !ranchBreeds.includes(breed) && styles.breedActive]}
+              onPress={() => setShowCustomBreed(!showCustomBreed)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.addPastureBtnText, breed && !ranchBreeds.includes(breed) && styles.breedActiveText]}>
+                {breed && !ranchBreeds.includes(breed) ? breed : '+ Custom'}
+              </Text>
             </TouchableOpacity>
           </View>
-        )}
-
-        {/* Birth Date */}
-        <Text style={styles.label}>Born (optional)</Text>
-        <View style={styles.birthRow}>
-          <TextInput
-            style={[styles.input, styles.birthInput]}
-            placeholder="MM"
-            placeholderTextColor="#999"
-            value={birthMonth}
-            onChangeText={(v) => setBirthMonth(v.replace(/[^0-9]/g, '').slice(0, 2))}
-            keyboardType="number-pad"
-            maxLength={2}
-          />
-          <Text style={styles.birthSeparator}>/</Text>
-          <TextInput
-            style={[styles.input, styles.birthInput]}
-            placeholder="YYYY"
-            placeholderTextColor="#999"
-            value={birthYear}
-            onChangeText={(v) => setBirthYear(v.replace(/[^0-9]/g, '').slice(0, 4))}
-            keyboardType="number-pad"
-            maxLength={4}
-          />
+          {showCustomBreed && (
+            <View style={styles.newPastureRow}>
+              <TextInput
+                style={[styles.input, { flex: 1, marginRight: 8 }]}
+                placeholder="Custom breed..."
+                placeholderTextColor="#999"
+                value={customBreed}
+                onChangeText={setCustomBreed}
+                autoCorrect={false}
+              />
+              <TouchableOpacity style={styles.addPastureSave} onPress={handleSetCustomBreed} activeOpacity={0.7}>
+                <Text style={styles.addPastureSaveText}>SET</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
-        {/* Mother Tag */}
-        <Text style={styles.label}>Mother's Tag (optional)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Tag number of mother cow..."
-          placeholderTextColor="#999"
-          value={motherTag}
-          onChangeText={setMotherTag}
-          autoCorrect={false}
-          autoCapitalize="characters"
-        />
+        {/* Birth Date & Mother */}
+        <View style={styles.card}>
+          <Text style={styles.label}>Born (optional)</Text>
+          <View style={styles.birthRow}>
+            <TextInput
+              style={[styles.input, styles.birthInput]}
+              placeholder="MM"
+              placeholderTextColor="#999"
+              value={birthMonth}
+              onChangeText={(v) => setBirthMonth(v.replace(/[^0-9]/g, '').slice(0, 2))}
+              keyboardType="number-pad"
+              maxLength={2}
+            />
+            <Text style={styles.birthSeparator}>/</Text>
+            <TextInput
+              style={[styles.input, styles.birthInput]}
+              placeholder="YYYY"
+              placeholderTextColor="#999"
+              value={birthYear}
+              onChangeText={(v) => setBirthYear(v.replace(/[^0-9]/g, '').slice(0, 4))}
+              keyboardType="number-pad"
+              maxLength={4}
+            />
+          </View>
+
+          <Text style={[styles.label, { marginTop: 16 }]}>Mother's Tag (optional)</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Tag number of mother cow..."
+            placeholderTextColor="#999"
+            value={motherTag}
+            onChangeText={setMotherTag}
+            autoCorrect={false}
+            autoCapitalize="characters"
+          />
+        </View>
 
         {/* Save */}
         <TouchableOpacity
@@ -507,97 +522,106 @@ export default function AddCowScreen({ navigation, route }: any) {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  container: { flex: 1, backgroundColor: '#FFF8E7' },
+  container: { flex: 1, backgroundColor: '#F5F5F0' },
   content: { padding: 16, paddingBottom: 60 },
-  label: { fontSize: 16, fontWeight: '600', color: '#2D5016', marginTop: 16, marginBottom: 8 },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  label: { fontSize: 16, fontWeight: '600', color: '#1A1A1A', marginBottom: 10 },
   input: {
     padding: 14,
     fontSize: 18,
-    backgroundColor: '#fff',
-    borderRadius: 10,
+    backgroundColor: '#F5F5F0',
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#ddd',
-    color: '#333',
+    borderColor: '#E0E0E0',
+    color: '#1A1A1A',
   },
   textArea: { minHeight: 80, textAlignVertical: 'top' },
   statusRow: { flexDirection: 'row', flexWrap: 'wrap' },
   statusButton: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: '#e0e0e0',
+    borderRadius: 20,
+    backgroundColor: '#F5F5F0',
     minWidth: 70,
     alignItems: 'center',
     marginBottom: 4,
     marginRight: 8,
   },
-  statusActive: { backgroundColor: '#2D5016' },
-  statusButtonText: { fontSize: 14, fontWeight: 'bold', color: '#666' },
-  statusActiveText: { color: '#fff' },
+  statusActive: { backgroundColor: '#1A1A1A' },
+  statusButtonText: { fontSize: 14, fontWeight: 'bold', color: '#6B6B6B' },
+  statusActiveText: { color: '#C5A55A' },
   tagRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   tagLabelButton: {
-    backgroundColor: '#8B4513',
+    backgroundColor: '#1A1A1A',
     paddingHorizontal: 12,
     paddingVertical: 14,
-    borderRadius: 8,
+    borderRadius: 10,
     minWidth: 90,
     marginRight: 8,
   },
-  tagLabelText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  tagLabelText: { color: '#C5A55A', fontSize: 14, fontWeight: '600' },
   tagInput: {
     flex: 1,
     padding: 14,
     fontSize: 18,
-    backgroundColor: '#fff',
-    borderRadius: 10,
+    backgroundColor: '#F5F5F0',
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#ddd',
-    color: '#333',
+    borderColor: '#E0E0E0',
+    color: '#1A1A1A',
   },
   removeTag: {
     marginLeft: 8,
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#ff5252',
+    backgroundColor: '#D32F2F',
     alignItems: 'center',
     justifyContent: 'center',
   },
   removeTagText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
   addTagButton: {
     padding: 14,
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#2D5016',
+    borderColor: '#C5A55A',
     borderStyle: 'dashed',
     alignItems: 'center',
     marginTop: 4,
   },
-  addTagText: { fontSize: 16, color: '#2D5016', fontWeight: '600' },
+  addTagText: { fontSize: 16, color: '#C5A55A', fontWeight: '600' },
   pastureRow: { flexDirection: 'row', flexWrap: 'wrap' },
   pastureOption: {
     paddingHorizontal: 14,
     paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: '#e0e0e0',
+    borderRadius: 20,
+    backgroundColor: '#F5F5F0',
     marginRight: 8,
     marginBottom: 8,
   },
-  pastureActive: { backgroundColor: '#8B4513' },
-  pastureOptionText: { fontSize: 14, fontWeight: '600', color: '#666' },
+  pastureActive: { backgroundColor: '#C5A55A' },
+  pastureOptionText: { fontSize: 14, fontWeight: '600', color: '#6B6B6B' },
   pastureActiveText: { color: '#fff' },
   medicalRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 },
   medicalTag: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFEBEE',
-    borderRadius: 8,
+    borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 10,
     marginRight: 8,
     marginBottom: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: '#D32F2F',
   },
   medicalTagLabel: { fontSize: 14, fontWeight: 'bold', color: '#D32F2F', marginRight: 8 },
   medicalTagRemove: { fontSize: 14, color: '#D32F2F', fontWeight: 'bold' },
@@ -605,7 +629,7 @@ const styles = StyleSheet.create({
   medicalPresetBtn: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: '#D32F2F',
     borderStyle: 'dashed',
@@ -618,41 +642,46 @@ const styles = StyleSheet.create({
   breedOption: {
     paddingHorizontal: 14,
     paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: '#e0e0e0',
+    borderRadius: 20,
+    backgroundColor: '#F5F5F0',
     marginRight: 8,
     marginBottom: 8,
   },
-  breedActive: { backgroundColor: '#795548' },
-  breedOptionText: { fontSize: 14, fontWeight: '600', color: '#666' },
-  breedActiveText: { color: '#fff' },
+  breedActive: { backgroundColor: '#1A1A1A' },
+  breedOptionText: { fontSize: 14, fontWeight: '600', color: '#6B6B6B' },
+  breedActiveText: { color: '#C5A55A' },
   addPastureBtn: {
     paddingHorizontal: 14,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 20,
     borderWidth: 2,
-    borderColor: '#8B4513',
+    borderColor: '#C5A55A',
     borderStyle: 'dashed',
     marginBottom: 8,
   },
-  addPastureBtnText: { fontSize: 14, fontWeight: '600', color: '#8B4513' },
-  newPastureRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  addPastureBtnText: { fontSize: 14, fontWeight: '600', color: '#C5A55A' },
+  newPastureRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
   addPastureSave: {
-    backgroundColor: '#8B4513',
+    backgroundColor: '#C5A55A',
     paddingHorizontal: 20,
     paddingVertical: 14,
-    borderRadius: 10,
+    borderRadius: 12,
   },
   addPastureSaveText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
   birthRow: { flexDirection: 'row', alignItems: 'center' },
   birthInput: { width: 80, textAlign: 'center' },
-  birthSeparator: { fontSize: 24, color: '#666', marginHorizontal: 8 },
+  birthSeparator: { fontSize: 24, color: '#6B6B6B', marginHorizontal: 8 },
   saveButton: {
-    marginTop: 24,
+    marginTop: 12,
     padding: 18,
-    borderRadius: 12,
-    backgroundColor: '#2D5016',
+    borderRadius: 14,
+    backgroundColor: '#C5A55A',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
   saveDisabled: { opacity: 0.6 },
   saveText: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
@@ -663,7 +692,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#FFF8E7',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 20,
     width: 260,
@@ -671,29 +700,26 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2D5016',
+    color: '#1A1A1A',
     marginBottom: 12,
     textAlign: 'center',
   },
   modalOption: {
     padding: 16,
-    borderRadius: 10,
-    backgroundColor: '#fff',
+    borderRadius: 12,
+    backgroundColor: '#F5F5F0',
     marginBottom: 8,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ddd',
   },
   modalOptionActive: {
-    backgroundColor: '#8B4513',
-    borderColor: '#8B4513',
+    backgroundColor: '#1A1A1A',
   },
   modalOptionText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: '#1A1A1A',
   },
   modalOptionTextActive: {
-    color: '#fff',
+    color: '#C5A55A',
   },
 });

@@ -17,9 +17,9 @@ import TeamScreen from './src/screens/TeamScreen';
 
 const Stack = createNativeStackNavigator();
 
-const headerStyle = { backgroundColor: '#2D5016' };
-const headerTintColor = '#fff';
-const headerTitleStyle = { fontWeight: 'bold' as const, fontSize: 20 };
+const headerStyle = { backgroundColor: '#1A1A1A' };
+const headerTintColor = '#C5A55A';
+const headerTitleStyle = { fontWeight: 'bold' as const, fontSize: 20, color: '#C5A55A' };
 
 type AppState = 'loading' | 'login' | 'ranch_select' | 'app';
 

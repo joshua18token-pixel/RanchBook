@@ -9,6 +9,7 @@ import {
   FlatList,
   Platform,
   Modal,
+  Image,
 } from 'react-native';
 import { createRanch, getMyRanches, acceptInvite, getPendingInvites, signOut, deleteRanch } from '../services/auth';
 
@@ -94,7 +95,11 @@ export default function RanchSetupScreen({ onRanchSelected, onLogout }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.logo}>🐂</Text>
+      <Image
+        source={require('../../assets/logo-ranchbook.jpg')}
+        style={styles.logoImage}
+        resizeMode="contain"
+      />
       <Text style={styles.title}>Your Ranches</Text>
 
       {/* Existing ranches */}
@@ -232,60 +237,76 @@ export default function RanchSetupScreen({ onRanchSelected, onLogout }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFF8E7', padding: 24, paddingTop: 60 },
-  logo: { fontSize: 48, textAlign: 'center', marginBottom: 8 },
-  title: { fontSize: 28, fontWeight: 'bold', color: '#2D5016', textAlign: 'center', marginBottom: 24 },
+  container: { flex: 1, backgroundColor: '#F5F5F0', padding: 24, paddingTop: 60 },
+  logoImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignSelf: 'center',
+    marginBottom: 12,
+  },
+  title: { fontSize: 28, fontWeight: 'bold', color: '#1A1A1A', textAlign: 'center', marginBottom: 24 },
   section: { marginBottom: 24 },
-  sectionTitle: { fontSize: 18, fontWeight: '600', color: '#2D5016', marginBottom: 12 },
+  sectionTitle: { fontSize: 18, fontWeight: '600', color: '#1A1A1A', marginBottom: 12 },
   ranchCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 18,
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
     borderLeftWidth: 4,
-    borderLeftColor: '#2D5016',
+    borderLeftColor: '#C5A55A',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  ranchName: { fontSize: 20, fontWeight: 'bold', color: '#333' },
-  roleBadge: { backgroundColor: '#2D5016', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 },
-  roleText: { color: '#fff', fontWeight: 'bold', fontSize: 12 },
+  ranchName: { fontSize: 20, fontWeight: 'bold', color: '#1A1A1A' },
+  roleBadge: { backgroundColor: '#1A1A1A', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
+  roleText: { color: '#C5A55A', fontWeight: 'bold', fontSize: 12 },
   inviteCard: {
     padding: 16,
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
     marginBottom: 8,
     borderLeftWidth: 4,
-    borderLeftColor: '#FFC107',
+    borderLeftColor: '#C5A55A',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  inviteName: { fontSize: 18, fontWeight: 'bold', color: '#333' },
-  inviteRole: { fontSize: 14, color: '#666', marginTop: 4 },
+  inviteName: { fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' },
+  inviteRole: { fontSize: 14, color: '#6B6B6B', marginTop: 4 },
   input: {
     padding: 16,
     fontSize: 18,
-    backgroundColor: '#fff',
-    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#ddd',
-    color: '#333',
+    borderColor: '#E0E0E0',
+    color: '#1A1A1A',
     marginBottom: 12,
   },
   button: {
     padding: 18,
     borderRadius: 12,
-    backgroundColor: '#2D5016',
+    backgroundColor: '#C5A55A',
     alignItems: 'center',
   },
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   logoutBtn: { alignItems: 'center', marginTop: 20 },
-  logoutText: { color: '#ff5252', fontSize: 16 },
+  logoutText: { color: '#D32F2F', fontSize: 16 },
   ranchRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   deleteRanchBtn: {
     width: 44,
     height: 44,
-    borderRadius: 10,
-    backgroundColor: '#ff5252',
+    borderRadius: 12,
+    backgroundColor: '#D32F2F',
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 8,
@@ -299,7 +320,7 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   modalContent: {
-    backgroundColor: '#FFF8E7',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 24,
     width: '100%',
@@ -314,13 +335,13 @@ const styles = StyleSheet.create({
   },
   modalWarning: {
     fontSize: 15,
-    color: '#333',
+    color: '#1A1A1A',
     marginBottom: 8,
     lineHeight: 22,
   },
   modalWarningList: {
     fontSize: 14,
-    color: '#666',
+    color: '#6B6B6B',
     marginBottom: 12,
     lineHeight: 22,
     paddingLeft: 8,
@@ -328,18 +349,18 @@ const styles = StyleSheet.create({
   modalConfirmLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: '#1A1A1A',
     marginTop: 8,
     marginBottom: 8,
   },
   modalInput: {
     padding: 14,
     fontSize: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#F5F5F0',
     borderRadius: 10,
     borderWidth: 2,
     borderColor: '#D32F2F',
-    color: '#333',
+    color: '#1A1A1A',
     marginBottom: 16,
   },
   modalDeleteBtn: {
@@ -356,5 +377,5 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
   },
-  modalCancelText: { color: '#666', fontSize: 16 },
+  modalCancelText: { color: '#6B6B6B', fontSize: 16 },
 });

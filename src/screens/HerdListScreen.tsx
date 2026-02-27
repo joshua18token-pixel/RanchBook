@@ -45,8 +45,8 @@ export default function HerdListScreen({ navigation, route }: any) {
     navigation.setOptions({
       headerTitle: () => (
         <View style={{ alignItems: 'center' }}>
-          <Text style={{ color: '#fff', fontSize: 20, fontWeight: 'bold' }}>{ranchName}</Text>
-          <Text style={{ color: '#ccc', fontSize: 11 }}>RanchBook</Text>
+          <Text style={{ color: '#C5A55A', fontSize: 20, fontWeight: 'bold' }}>{ranchName}</Text>
+          <Text style={{ color: '#999', fontSize: 11 }}>RanchBook</Text>
         </View>
       ),
       headerLeft: () => (
@@ -54,7 +54,7 @@ export default function HerdListScreen({ navigation, route }: any) {
           onPress={() => switchToRanchSelect()}
           style={{ paddingRight: 12 }}
         >
-          <Text style={{ color: '#fff', fontSize: 14 }}>← Ranches</Text>
+          <Text style={{ color: '#C5A55A', fontSize: 14 }}>← Ranches</Text>
         </TouchableOpacity>
       ),
     });
@@ -173,18 +173,21 @@ export default function HerdListScreen({ navigation, route }: any) {
         </Text>
       </View>
 
-      <TextInput
-        style={styles.searchBar}
-        placeholder="Search tag, pasture, or 02/2024-06/2025..."
-        placeholderTextColor="#999"
-        value={query}
-        onChangeText={(text) => {
-          setQuery(text);
-        }}
-        onSubmitEditing={loadCows}
-        returnKeyType="search"
-        autoCorrect={false}
-      />
+      <View style={styles.searchBarContainer}>
+        <Text style={styles.searchIcon}>🔍</Text>
+        <TextInput
+          style={styles.searchBar}
+          placeholder="Search tag, pasture, or 02/2024-06/2025..."
+          placeholderTextColor="#999"
+          value={query}
+          onChangeText={(text) => {
+            setQuery(text);
+          }}
+          onSubmitEditing={loadCows}
+          returnKeyType="search"
+          autoCorrect={false}
+        />
+      </View>
       {/* Sort options */}
       <View style={styles.sortRow}>
         {([
@@ -248,13 +251,13 @@ export default function HerdListScreen({ navigation, route }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFF8E7' },
+  container: { flex: 1, backgroundColor: '#F5F5F0' },
   countRow: {
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 4,
   },
-  countText: { fontSize: 16, fontWeight: 'bold', color: '#2D5016' },
+  countText: { fontSize: 16, fontWeight: 'bold', color: '#1A1A1A' },
   sortRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -262,26 +265,41 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   sortBtn: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: '#e0e0e0',
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
     marginRight: 8,
     marginBottom: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 1,
   },
-  sortBtnActive: { backgroundColor: '#2D5016' },
-  sortBtnText: { fontSize: 13, fontWeight: '600', color: '#666' },
-  sortBtnTextActive: { color: '#fff' },
+  sortBtnActive: { backgroundColor: '#1A1A1A' },
+  sortBtnText: { fontSize: 13, fontWeight: '600', color: '#6B6B6B' },
+  sortBtnTextActive: { color: '#C5A55A' },
   updatedDate: { fontSize: 12, color: '#999', marginTop: 2 },
-  searchBar: {
+  searchBarContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     margin: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  searchIcon: { fontSize: 16, marginRight: 8 },
+  searchBar: {
+    flex: 1,
     padding: 14,
     fontSize: 18,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    color: '#333',
+    color: '#1A1A1A',
   },
   cowRow: {
     flexDirection: 'row',
@@ -290,27 +308,27 @@ const styles = StyleSheet.create({
     padding: 16,
     marginHorizontal: 12,
     marginVertical: 4,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    elevation: 2,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
   },
   cowInfo: { flex: 1 },
-  tagNumber: { fontSize: 22, fontWeight: 'bold', color: '#2D5016' },
-  cowName: { fontSize: 16, color: '#666', marginTop: 2 },
-  pastureName: { fontSize: 14, color: '#8B4513', marginTop: 2 },
+  tagNumber: { fontSize: 22, fontWeight: 'bold', color: '#1A1A1A' },
+  cowName: { fontSize: 16, color: '#6B6B6B', marginTop: 2 },
+  pastureName: { fontSize: 14, color: '#C5A55A', marginTop: 2 },
   extraTags: { fontSize: 13, color: '#999', marginTop: 2 },
   statusBadge: {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 8,
+    borderRadius: 20,
     minWidth: 70,
     alignItems: 'center',
   },
-  statusText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
+  statusText: { color: '#fff', fontWeight: 'bold', fontSize: 13 },
   leftFabs: {
     position: 'absolute',
     bottom: 30,
@@ -322,28 +340,28 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 28,
     marginRight: 10,
-    backgroundColor: '#8B4513',
+    backgroundColor: '#1A1A1A',
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 5,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 5,
   },
   exportFabText: { fontSize: 24 },
   teamFab: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#2D5016',
+    backgroundColor: '#1A1A1A',
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 5,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 5,
   },
   teamFabText: { fontSize: 24 },
   fab: {
@@ -353,14 +371,14 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#2D5016',
+    backgroundColor: '#C5A55A',
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 5,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 5,
   },
   fabText: { color: '#fff', fontSize: 32, lineHeight: 34 },
   empty: { alignItems: 'center', paddingTop: 60 },

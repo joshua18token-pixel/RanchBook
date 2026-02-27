@@ -104,113 +104,123 @@ export default function LoginScreen({ onLogin, inviteEmail }: { onLogin: () => v
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.logo}>🐂</Text>
-        <Text style={styles.title}>RanchBook</Text>
-        <Text style={styles.subtitle}>
-          {isInvite
-            ? (isSignUp ? 'Create an account to join your ranch' : 'Sign in to accept your invite')
-            : (isSignUp ? 'Create your account' : 'Sign in to your ranch')}
-        </Text>
-
-        {/* Status message */}
-        {statusMessage && (
-          <View style={[styles.statusBanner, statusMessage.type === 'success' ? styles.statusSuccess : styles.statusError]}>
-            <Text style={styles.statusText}>{statusMessage.text}</Text>
-          </View>
-        )}
-
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor="#999"
-          value={email}
-          onChangeText={(v) => { setEmail(v); setStatusMessage(null); }}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-
-        <TextInput
-          style={styles.input}
-          placeholder="Password (min 6 characters)"
-          placeholderTextColor="#999"
-          value={password}
-          onChangeText={(v) => { setPassword(v); setStatusMessage(null); }}
-          secureTextEntry
-        />
-
-        <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={handleSubmit}
-          disabled={loading}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.buttonText}>
-            {loading ? 'PLEASE WAIT...' : isSignUp ? 'CREATE ACCOUNT' : 'SIGN IN'}
+        {/* Dark hero area */}
+        <View style={styles.heroArea}>
+          <Image
+            source={require('../../assets/logo-ranchbook.jpg')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
+          <Text style={styles.title}>RanchBook</Text>
+          <Text style={styles.subtitle}>
+            {isInvite
+              ? (isSignUp ? 'Create an account to join your ranch' : 'Sign in to accept your invite')
+              : (isSignUp ? 'Create your account' : 'Sign in to your ranch')}
           </Text>
-        </TouchableOpacity>
-
-        {/* Divider */}
-        <View style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>or continue with</Text>
-          <View style={styles.dividerLine} />
         </View>
 
-        {/* OAuth buttons */}
-        <TouchableOpacity
-          style={[styles.oauthButton, styles.googleButton]}
-          onPress={async () => {
-            try {
-              await signInWithGoogle();
-            } catch (e: any) {
-              showMessage(e.message || 'Google sign-in failed', 'error');
-            }
-          }}
-          activeOpacity={0.8}
-        >
-          <View style={styles.oauthContent}>
-            <Image source={require('../../assets/icons/google-logo.png')} style={styles.oauthIcon} />
-            <Text style={styles.oauthButtonText}>Sign in with Google</Text>
-          </View>
-        </TouchableOpacity>
+        {/* Form card */}
+        <View style={styles.formCard}>
+          {/* Status message */}
+          {statusMessage && (
+            <View style={[styles.statusBanner, statusMessage.type === 'success' ? styles.statusSuccess : styles.statusError]}>
+              <Text style={styles.statusText}>{statusMessage.text}</Text>
+            </View>
+          )}
 
-        {/* Apple Sign-In — uncomment when Apple provider is enabled in Supabase
-        <TouchableOpacity
-          style={[styles.oauthButton, styles.appleButton]}
-          onPress={async () => {
-            try {
-              await signInWithApple();
-            } catch (e: any) {
-              showMessage(e.message || 'Apple sign-in failed', 'error');
-            }
-          }}
-          activeOpacity={0.8}
-        >
-          <View style={styles.oauthContent}>
-            <Image source={require('../../assets/icons/apple-logo.png')} style={[styles.oauthIcon, { tintColor: '#fff' }]} />
-            <Text style={[styles.oauthButtonText, styles.appleButtonText]}>Sign in with Apple</Text>
-          </View>
-        </TouchableOpacity>
-        */}
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            placeholderTextColor="#999"
+            value={email}
+            onChangeText={(v) => { setEmail(v); setStatusMessage(null); }}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
 
-        <TouchableOpacity
-          style={styles.switchButton}
-          onPress={() => { setIsSignUp(!isSignUp); setStatusMessage(null); }}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.switchText}>
-            {isSignUp ? 'Already have an account? Sign in' : "New here? Create an account"}
-          </Text>
-        </TouchableOpacity>
+          <TextInput
+            style={styles.input}
+            placeholder="Password (min 6 characters)"
+            placeholderTextColor="#999"
+            value={password}
+            onChangeText={(v) => { setPassword(v); setStatusMessage(null); }}
+            secureTextEntry
+          />
 
-        {isSignUp && (
-          <View style={styles.signupInfo}>
-            <Text style={styles.signupInfoText}>
-              📧 After creating your account, you'll receive a confirmation email. Click the link to verify, then sign in.
+          <TouchableOpacity
+            style={[styles.button, loading && styles.buttonDisabled]}
+            onPress={handleSubmit}
+            disabled={loading}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.buttonText}>
+              {loading ? 'PLEASE WAIT...' : isSignUp ? 'CREATE ACCOUNT' : 'SIGN IN'}
             </Text>
+          </TouchableOpacity>
+
+          {/* Divider */}
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or continue with</Text>
+            <View style={styles.dividerLine} />
           </View>
-        )}
+
+          {/* OAuth buttons */}
+          <TouchableOpacity
+            style={[styles.oauthButton, styles.googleButton]}
+            onPress={async () => {
+              try {
+                await signInWithGoogle();
+              } catch (e: any) {
+                showMessage(e.message || 'Google sign-in failed', 'error');
+              }
+            }}
+            activeOpacity={0.8}
+          >
+            <View style={styles.oauthContent}>
+              <Image source={require('../../assets/icons/google-logo.png')} style={styles.oauthIcon} />
+              <Text style={styles.oauthButtonText}>Sign in with Google</Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Apple Sign-In — uncomment when Apple provider is enabled in Supabase
+          <TouchableOpacity
+            style={[styles.oauthButton, styles.appleButton]}
+            onPress={async () => {
+              try {
+                await signInWithApple();
+              } catch (e: any) {
+                showMessage(e.message || 'Apple sign-in failed', 'error');
+              }
+            }}
+            activeOpacity={0.8}
+          >
+            <View style={styles.oauthContent}>
+              <Image source={require('../../assets/icons/apple-logo.png')} style={[styles.oauthIcon, { tintColor: '#fff' }]} />
+              <Text style={[styles.oauthButtonText, styles.appleButtonText]}>Sign in with Apple</Text>
+            </View>
+          </TouchableOpacity>
+          */}
+
+          <TouchableOpacity
+            style={styles.switchButton}
+            onPress={() => { setIsSignUp(!isSignUp); setStatusMessage(null); }}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.switchText}>
+              {isSignUp ? 'Already have an account? Sign in' : "New here? Create an account"}
+            </Text>
+          </TouchableOpacity>
+
+          {isSignUp && (
+            <View style={styles.signupInfo}>
+              <Text style={styles.signupInfoText}>
+                📧 After creating your account, you'll receive a confirmation email. Click the link to verify, then sign in.
+              </Text>
+            </View>
+          )}
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -218,11 +228,36 @@ export default function LoginScreen({ onLogin, inviteEmail }: { onLogin: () => v
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  container: { flex: 1, backgroundColor: '#FFF8E7' },
-  content: { flexGrow: 1, justifyContent: 'center', padding: 24 },
-  logo: { fontSize: 64, textAlign: 'center', marginBottom: 8 },
-  title: { fontSize: 36, fontWeight: 'bold', color: '#2D5016', textAlign: 'center' },
-  subtitle: { fontSize: 16, color: '#666', textAlign: 'center', marginBottom: 24 },
+  container: { flex: 1, backgroundColor: '#F5F5F0' },
+  content: { flexGrow: 1 },
+  heroArea: {
+    backgroundColor: '#1A1A1A',
+    alignItems: 'center',
+    paddingTop: 60,
+    paddingBottom: 32,
+    paddingHorizontal: 24,
+  },
+  logoImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    marginBottom: 12,
+  },
+  title: { fontSize: 36, fontWeight: 'bold', color: '#C5A55A', textAlign: 'center' },
+  subtitle: { fontSize: 16, color: '#999', textAlign: 'center', marginTop: 8 },
+  formCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    marginHorizontal: 16,
+    marginTop: -16,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
+    marginBottom: 32,
+  },
   statusBanner: {
     padding: 14,
     borderRadius: 10,
@@ -234,35 +269,35 @@ const styles = StyleSheet.create({
   input: {
     padding: 16,
     fontSize: 18,
-    backgroundColor: '#fff',
-    borderRadius: 10,
+    backgroundColor: '#F5F5F0',
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#ddd',
-    color: '#333',
+    borderColor: '#E0E0E0',
+    color: '#1A1A1A',
     marginBottom: 12,
   },
   button: {
     padding: 18,
     borderRadius: 12,
-    backgroundColor: '#2D5016',
+    backgroundColor: '#C5A55A',
     alignItems: 'center',
     marginTop: 8,
   },
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
   switchButton: { marginTop: 20, alignItems: 'center' },
-  switchText: { color: '#8B4513', fontSize: 16 },
+  switchText: { color: '#C5A55A', fontSize: 16, fontWeight: '600' },
   signupInfo: {
     marginTop: 20,
     padding: 14,
     backgroundColor: '#FFF3E0',
     borderRadius: 10,
     borderLeftWidth: 4,
-    borderLeftColor: '#FF9800',
+    borderLeftColor: '#FFA000',
   },
-  signupInfoText: { fontSize: 14, color: '#666', lineHeight: 20 },
+  signupInfoText: { fontSize: 14, color: '#6B6B6B', lineHeight: 20 },
   divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 20 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: '#ccc' },
+  dividerLine: { flex: 1, height: 1, backgroundColor: '#E0E0E0' },
   dividerText: { marginHorizontal: 12, color: '#999', fontSize: 14 },
   oauthButton: {
     padding: 16,
@@ -273,7 +308,7 @@ const styles = StyleSheet.create({
   },
   googleButton: {
     backgroundColor: '#fff',
-    borderColor: '#ddd',
+    borderColor: '#E0E0E0',
   },
   appleButton: {
     backgroundColor: '#000',
@@ -281,6 +316,6 @@ const styles = StyleSheet.create({
   },
   oauthContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   oauthIcon: { width: 22, height: 22, marginRight: 10, resizeMode: 'contain' },
-  oauthButtonText: { fontSize: 17, fontWeight: '600', color: '#333' },
+  oauthButtonText: { fontSize: 17, fontWeight: '600', color: '#1A1A1A' },
   appleButtonText: { color: '#fff' },
 });
