@@ -23,17 +23,41 @@ const headerTitleStyle = { fontWeight: 'bold' as const, fontSize: 20 };
 
 type AppState = 'loading' | 'login' | 'ranch_select' | 'app';
 
+// Parse invite params from URL (web only)
+function getInviteParams(): { email?: string; ranchId?: string } | null {
+  if (typeof window === 'undefined') return null;
+  const params = new URLSearchParams(window.location.search);
+  const email = params.get('email');
+  const ranchId = params.get('ranch');
+  if (email || ranchId) return { email: email || undefined, ranchId: ranchId || undefined };
+  return null;
+}
+
 export default function App() {
   const [appState, setAppState] = useState<AppState>('loading');
   const [ranchId, setRanchId] = useState<string | null>(null);
   const [navKey, setNavKey] = useState(0);
   const [ranchName, setRanchName] = useState<string>('');
   const [myRole, setMyRole] = useState<string>('read');
+  const [inviteParams, setInviteParams] = useState<{ email?: string; ranchId?: string } | null>(null);
 
   useEffect(() => {
+    const invite = getInviteParams();
+    if (invite) setInviteParams(invite);
+
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) {
-        setAppState('ranch_select');
+        // If logged in and there's an invite, auto-accept then go to ranch select
+        if (invite?.ranchId) {
+          import('./src/services/auth').then(({ acceptInvite }) => {
+            acceptInvite(invite.ranchId!).catch(() => {});
+            // Clear URL params
+            if (typeof window !== 'undefined') window.history.replaceState({}, '', '/');
+            setAppState('ranch_select');
+          });
+        } else {
+          setAppState('ranch_select');
+        }
       } else {
         setAppState('login');
       }
@@ -44,6 +68,14 @@ export default function App() {
         setAppState('login');
         setRanchId(null);
       } else if (event === 'SIGNED_IN') {
+        // Auto-accept invite after sign in/up
+        const inv = getInviteParams() || inviteParams;
+        if (inv?.ranchId) {
+          import('./src/services/auth').then(({ acceptInvite }) => {
+            acceptInvite(inv.ranchId!).catch(() => {});
+            if (typeof window !== 'undefined') window.history.replaceState({}, '', '/');
+          });
+        }
         setAppState('ranch_select');
       }
     });
@@ -54,7 +86,7 @@ export default function App() {
   if (appState === 'loading') return null;
 
   if (appState === 'login') {
-    return <LoginScreen onLogin={() => setAppState('ranch_select')} />;
+    return <LoginScreen onLogin={() => setAppState('ranch_select')} inviteEmail={inviteParams?.email} />;
   }
 
   if (appState === 'ranch_select') {

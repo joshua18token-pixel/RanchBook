@@ -13,12 +13,35 @@ import {
 } from 'react-native';
 import { signIn, signUp, signInWithGoogle, signInWithApple } from '../services/auth';
 
-export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
-  const [email, setEmail] = useState('');
+export default function LoginScreen({ onLogin, inviteEmail }: { onLogin: () => void; inviteEmail?: string }) {
+  const [email, setEmail] = useState(inviteEmail || '');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [isInvite, setIsInvite] = useState(!!inviteEmail);
+  const [checkedExisting, setCheckedExisting] = useState(false);
+
+  // Check if invited email already has an account
+  React.useEffect(() => {
+    if (!inviteEmail) return;
+    import('../services/supabase').then(({ supabase }) => {
+      // Try signing in with a wrong password to see if user exists
+      // Better approach: check ranch_members for a user_id
+      supabase.from('ranch_members').select('user_id').eq('email', inviteEmail.toLowerCase()).not('user_id', 'is', null).limit(1).then(({ data }) => {
+        if (data && data.length > 0) {
+          // User exists — show sign in
+          setIsSignUp(false);
+          setStatusMessage({ text: `Welcome back! Sign in to accept your ranch invite.`, type: 'success' });
+        } else {
+          // New user — show sign up
+          setIsSignUp(true);
+          setStatusMessage({ text: `You've been invited to a ranch! Create an account to get started.`, type: 'success' });
+        }
+        setCheckedExisting(true);
+      });
+    });
+  }, [inviteEmail]);
 
   const showMessage = (text: string, type: 'success' | 'error') => {
     setStatusMessage({ text, type });
@@ -42,7 +65,14 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
     setLoading(true);
     try {
       if (isSignUp) {
-        await signUp(email.trim().toLowerCase(), password);
+        const result = await signUp(email.trim().toLowerCase(), password);
+        // If session is returned, user is auto-confirmed (no email verification needed)
+        if (result.session) {
+          showMessage('✅ Account created!', 'success');
+          onLogin();
+          return;
+        }
+        // Otherwise they need to verify email
         showMessage('✅ Account created! Check your email for a confirmation link, then come back and sign in.', 'success');
         setIsSignUp(false);
       } else {
@@ -77,7 +107,9 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
         <Text style={styles.logo}>🐂</Text>
         <Text style={styles.title}>RanchBook</Text>
         <Text style={styles.subtitle}>
-          {isSignUp ? 'Create your account' : 'Sign in to your ranch'}
+          {isInvite
+            ? (isSignUp ? 'Create an account to join your ranch' : 'Sign in to accept your invite')
+            : (isSignUp ? 'Create your account' : 'Sign in to your ranch')}
         </Text>
 
         {/* Status message */}
