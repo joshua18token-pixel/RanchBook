@@ -46,7 +46,7 @@ export default function HerdListScreen({ navigation, route }: any) {
       headerTitle: () => (
         <View style={{ alignItems: 'center' }}>
           <Text style={{ color: '#C5A55A', fontSize: 20, fontWeight: 'bold' }}>{ranchName}</Text>
-          <Text style={{ color: '#999', fontSize: 11 }}>RanchBook</Text>
+
         </View>
       ),
       headerLeft: () => (

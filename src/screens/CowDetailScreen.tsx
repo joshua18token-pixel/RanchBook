@@ -406,7 +406,8 @@ export default function CowDetailScreen({ route, navigation }: any) {
         )}
 
         {/* Tags — moved up */}
-        <Text style={styles.sectionTitle}>Tags</Text>
+        <View style={styles.card}>
+        <Text style={[styles.sectionTitle, { marginTop: 0 }]}>Tags</Text>
         {editTags.map((tag, i) => (
           <View key={tag.id || i} style={styles.tagRow}>
             <TouchableOpacity
@@ -446,8 +447,11 @@ export default function CowDetailScreen({ route, navigation }: any) {
           </View>
         )}
 
+        </View>
+
         {/* Photos — moved up */}
-        <Text style={styles.sectionTitle}>Photos ({(cow.photos || []).length})</Text>
+        <View style={styles.card}>
+        <Text style={[styles.sectionTitle, { marginTop: 0 }]}>Photos ({(cow.photos || []).length})</Text>
         <PhotoViewer
           photos={cow.photos || []}
           onDelete={removePhoto}
@@ -455,7 +459,10 @@ export default function CowDetailScreen({ route, navigation }: any) {
           onCamera={takePhoto}
         />
 
+        </View>
+
         {/* Pasture */}
+        <View style={styles.card}>
         <TouchableOpacity
           style={styles.infoRow}
           onPress={() => setShowPasturePicker(!showPasturePicker)}
@@ -509,8 +516,11 @@ export default function CowDetailScreen({ route, navigation }: any) {
           </View>
         )}
 
+        </View>
+
         {/* Medical Watch Issues */}
-        <Text style={styles.sectionTitle}>🏥 Medical Watch</Text>
+        <View style={styles.card}>
+        <Text style={[styles.sectionTitle, { marginTop: 0 }]}>🏥 Medical Watch</Text>
         {medicalIssues.length > 0 ? (
           <View style={styles.medicalRow}>
             {medicalIssues.map((issue) => (
@@ -566,7 +576,10 @@ export default function CowDetailScreen({ route, navigation }: any) {
           </TouchableOpacity>
         </View>
 
+        </View>
+
         {/* Description */}
+        <View style={styles.card}>
         {editingField === 'description' ? (
           <View style={styles.editRow}>
             <TextInput
@@ -590,6 +603,10 @@ export default function CowDetailScreen({ route, navigation }: any) {
           </TouchableOpacity>
         )}
 
+        </View>
+
+        {/* Details card */}
+        <View style={styles.card}>
         {/* Breed — button picker */}
         <TouchableOpacity
           style={styles.infoRow}
@@ -724,6 +741,8 @@ export default function CowDetailScreen({ route, navigation }: any) {
           </TouchableOpacity>
         )}
 
+        </View>
+
         {/* Calves */}
         {calves.length > 0 && (
           <>
@@ -746,7 +765,8 @@ export default function CowDetailScreen({ route, navigation }: any) {
         )}
 
         {/* Notes */}
-        <Text style={styles.sectionTitle}>Notes ({cow.notes.length})</Text>
+        <View style={styles.card}>
+        <Text style={[styles.sectionTitle, { marginTop: 0 }]}>Notes ({cow.notes.length})</Text>
         <View style={styles.addNoteRow}>
           <TextInput
             style={styles.noteInput}
@@ -778,6 +798,8 @@ export default function CowDetailScreen({ route, navigation }: any) {
         {sortedNotes.length === 0 && (
           <Text style={styles.noNotes}>No notes yet</Text>
         )}
+
+        </View>
 
         {/* Delete */}
         <TouchableOpacity style={styles.deleteButton} onPress={handleDelete} activeOpacity={0.7}>
@@ -822,6 +844,17 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: { flex: 1, backgroundColor: '#F5F5F0' },
   content: { padding: 16, paddingBottom: 60 },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',

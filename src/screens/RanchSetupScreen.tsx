@@ -239,9 +239,9 @@ export default function RanchSetupScreen({ onRanchSelected, onLogout }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F5F0', padding: 24, paddingTop: 60 },
   logoImage: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
+    width: 240,
+    height: 240,
+    borderRadius: 120,
     alignSelf: 'center',
     marginBottom: 16,
   },

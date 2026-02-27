@@ -1,5 +1,5 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
-import { Platform, TouchableOpacity, Text } from 'react-native';
+import { Platform, TouchableOpacity, Text, Image } from 'react-native';
 import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
@@ -140,7 +140,7 @@ export default function App() {
           headerTintColor,
           headerTitleStyle,
           headerRight: () => (
-            <Text style={{ color: '#C5A55A', fontSize: 13, fontWeight: '600', marginRight: 12, opacity: 0.7 }}>RanchBook.io</Text>
+            <Image source={require('./assets/ranchbook-text.png')} style={{ width: 120, height: 20, resizeMode: 'contain', marginRight: 12, opacity: 0.8 }} />
           ),
         }}
       >
