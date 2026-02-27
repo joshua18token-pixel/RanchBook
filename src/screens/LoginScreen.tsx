@@ -143,6 +143,7 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
           </View>
         </TouchableOpacity>
 
+        {/* Apple Sign-In — uncomment when Apple provider is enabled in Supabase
         <TouchableOpacity
           style={[styles.oauthButton, styles.appleButton]}
           onPress={async () => {
@@ -159,6 +160,7 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
             <Text style={[styles.oauthButtonText, styles.appleButtonText]}>Sign in with Apple</Text>
           </View>
         </TouchableOpacity>
+        */}
 
         <TouchableOpacity
           style={styles.switchButton}
