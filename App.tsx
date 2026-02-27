@@ -25,7 +25,7 @@ type AppState = 'loading' | 'login' | 'ranch_select' | 'app';
 
 // Parse invite params from URL (web only)
 function getInviteParams(): { email?: string; ranchId?: string } | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === 'undefined' || !window.location?.search) return null;
   const params = new URLSearchParams(window.location.search);
   const email = params.get('email');
   const ranchId = params.get('ranch');
