@@ -54,7 +54,7 @@ export default function HerdListScreen({ navigation, route }: any) {
           onPress={() => switchToRanchSelect()}
           style={{ paddingRight: 12 }}
         >
-          <Text style={{ color: '#C5A55A', fontSize: 16, fontWeight: '600' }}>← Ranches</Text>
+          <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>← Ranches</Text>
         </TouchableOpacity>
       ),
     });

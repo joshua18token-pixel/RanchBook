@@ -1,5 +1,5 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
-import { Platform, TouchableOpacity, Text, Image } from 'react-native';
+import { Platform, TouchableOpacity, Text, Image, StatusBar } from 'react-native';
 import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
@@ -127,6 +127,8 @@ export default function App() {
   };
 
   return (
+    <>
+    <StatusBar barStyle="light-content" />
     <AppContext.Provider value={{ switchToRanchSelect: () => {
       if (typeof window !== 'undefined' && window.history?.replaceState) {
         window.history.replaceState({}, '', '/');
@@ -154,7 +156,7 @@ export default function App() {
           name="AddCow"
           component={AddCowScreen}
           options={({ navigation }) => ({
-            title: `${ranchName}: Add Cow`,
+            title: Platform.OS === 'web' ? `${ranchName}: Add Cow` : 'Add Cow',
             ...(Platform.OS === 'web' ? { headerLeft: () => (
               <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 12 }}>
                 <Text style={{ color: '#C5A55A', fontSize: 18 }}>← Back</Text>
@@ -167,7 +169,7 @@ export default function App() {
           name="CowDetail"
           component={CowDetailScreen}
           options={({ navigation }) => ({
-            title: `${ranchName}: Cow Details`,
+            title: Platform.OS === 'web' ? `${ranchName}: Cow Details` : 'Cow Details',
             ...(Platform.OS === 'web' ? { headerLeft: () => (
               <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 12 }}>
                 <Text style={{ color: '#C5A55A', fontSize: 18 }}>← Back</Text>
@@ -180,7 +182,7 @@ export default function App() {
           name="Team"
           component={TeamScreen}
           options={({ navigation }) => ({
-            title: `${ranchName}: Team`,
+            title: Platform.OS === 'web' ? `${ranchName}: Team` : 'Team',
             ...(Platform.OS === 'web' ? { headerLeft: () => (
               <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 12 }}>
                 <Text style={{ color: '#C5A55A', fontSize: 18 }}>← Back</Text>
@@ -192,5 +194,6 @@ export default function App() {
       </Stack.Navigator>
     </NavigationContainer>
     </AppContext.Provider>
+    </>
   );
 }
