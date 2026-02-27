@@ -10,7 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { getRanchMembers, inviteMember, updateMemberRole, removeMember } from '../services/auth';
+import { getRanchMembers, inviteMember, updateMemberRole, removeMember, transferManager } from '../services/auth';
 
 export default function TeamScreen({ route }: any) {
   const { ranchId, myRole } = route.params;
@@ -103,6 +103,48 @@ export default function TeamScreen({ route }: any) {
     }
   };
 
+  const handleTransferManager = async (member: any) => {
+    if (!member.accepted || !member.user_id) {
+      if (Platform.OS === 'web') {
+        window.alert('That member needs to accept their invite and sign in first.');
+      } else {
+        Alert.alert('Not Ready', 'That member needs to accept their invite and sign in first.');
+      }
+      return;
+    }
+
+    const confirmMsg = `Transfer Manager role to ${member.email}?\n\nThis will make them the ranch owner and demote you to Read & Write. This cannot be undone by you.`;
+
+    const doTransfer = async () => {
+      try {
+        await transferManager(ranchId, member.id);
+        if (Platform.OS === 'web') {
+          window.alert('Manager role transferred! You are now Read & Write.');
+        } else {
+          Alert.alert('Done', 'Manager role transferred! You are now Read & Write.');
+        }
+        loadMembers();
+      } catch (e: any) {
+        if (Platform.OS === 'web') {
+          window.alert(e.message || 'Transfer failed');
+        } else {
+          Alert.alert('Error', e.message || 'Transfer failed');
+        }
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm(confirmMsg)) {
+        await doTransfer();
+      }
+    } else {
+      Alert.alert('Transfer Manager', confirmMsg, [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Transfer', style: 'destructive', onPress: doTransfer },
+      ]);
+    }
+  };
+
   const ROLE_COLORS: Record<string, string> = {
     manager: '#2D5016',
     write: '#1976D2',
@@ -137,6 +179,15 @@ export default function TeamScreen({ route }: any) {
                   {m.role.toUpperCase()}{isManager && m.role !== 'manager' ? ' ▼' : ''}
                 </Text>
               </TouchableOpacity>
+              {isManager && m.role !== 'manager' && m.accepted && (
+                <TouchableOpacity
+                  style={styles.transferBtn}
+                  onPress={() => handleTransferManager(m)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.transferBtnText}>👑</Text>
+                </TouchableOpacity>
+              )}
               {isManager && m.role !== 'manager' && (
                 <TouchableOpacity
                   style={styles.removeBtn}
@@ -235,6 +286,16 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   roleText: { color: '#fff', fontWeight: 'bold', fontSize: 12 },
+  transferBtn: {
+    marginLeft: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFA000',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  transferBtnText: { fontSize: 16 },
   removeBtn: {
     marginLeft: 8,
     width: 36,

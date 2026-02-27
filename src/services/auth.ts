@@ -189,6 +189,55 @@ export async function deleteRanch(ranchId: string) {
   if (error) throw error;
 }
 
+export async function transferManager(ranchId: string, newManagerMemberId: string) {
+  const user = await getCurrentUser();
+  if (!user) throw new Error('Not logged in');
+
+  // Verify current user is the owner
+  const { data: ranch } = await supabase
+    .from('ranches')
+    .select('owner_id')
+    .eq('id', ranchId)
+    .single();
+
+  if (!ranch || ranch.owner_id !== user.id) {
+    throw new Error('Only the current ranch manager can transfer ownership');
+  }
+
+  // Get the new manager's user_id
+  const { data: newManager } = await supabase
+    .from('ranch_members')
+    .select('user_id')
+    .eq('id', newManagerMemberId)
+    .single();
+
+  if (!newManager?.user_id) {
+    throw new Error('That member must have an active account first');
+  }
+
+  // Update ranch owner
+  const { error: ownerError } = await supabase
+    .from('ranches')
+    .update({ owner_id: newManager.user_id })
+    .eq('id', ranchId);
+  if (ownerError) throw ownerError;
+
+  // Set new manager's role to manager
+  const { error: newRoleError } = await supabase
+    .from('ranch_members')
+    .update({ role: 'manager' })
+    .eq('id', newManagerMemberId);
+  if (newRoleError) throw newRoleError;
+
+  // Demote current user to write
+  const { error: demoteError } = await supabase
+    .from('ranch_members')
+    .update({ role: 'write' })
+    .eq('ranch_id', ranchId)
+    .eq('user_id', user.id);
+  if (demoteError) throw demoteError;
+}
+
 export async function getPendingInvites() {
   const user = await getCurrentUser();
   if (!user) throw new Error('Not logged in');
