@@ -18,22 +18,20 @@ export async function signOut() {
 }
 
 export async function signInWithGoogle() {
+  const redirectTo = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : 'https://ranchbook.io';
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
-    options: {
-      redirectTo: typeof window !== 'undefined' ? window.location.origin : 'https://ranchbook.io',
-    },
+    options: { redirectTo },
   });
   if (error) throw error;
   return data;
 }
 
 export async function signInWithApple() {
+  const redirectTo = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : 'https://ranchbook.io';
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'apple',
-    options: {
-      redirectTo: typeof window !== 'undefined' ? window.location.origin : 'https://ranchbook.io',
-    },
+    options: { redirectTo },
   });
   if (error) throw error;
   return data;
