@@ -10,6 +10,7 @@ import {
   Platform,
   Modal,
   Image,
+  ScrollView,
 } from 'react-native';
 import { createRanch, getMyRanches, acceptInvite, getPendingInvites, signOut, deleteRanch } from '../services/auth';
 
@@ -94,12 +95,17 @@ export default function RanchSetupScreen({ onRanchSelected, onLogout }: Props) {
   };
 
   return (
-    <View style={styles.container}>
-      <Image
-        source={require('../../assets/logo-ranchbook.jpg')}
-        style={styles.logoImage}
-        resizeMode="contain"
-      />
+    <ScrollView style={{ flex: 1, backgroundColor: '#F5F5F0' }}>
+      {/* Hero banner */}
+      <View style={styles.heroBanner}>
+        <Image
+          source={require('../../assets/logo-ranchbook.jpg')}
+          style={styles.logoImage}
+          resizeMode="contain"
+        />
+      </View>
+
+      <View style={styles.container}>
       <Text style={styles.title}>Your Ranches</Text>
 
       {/* Existing ranches */}
@@ -233,17 +239,21 @@ export default function RanchSetupScreen({ onRanchSelected, onLogout }: Props) {
         </View>
       </Modal>
     </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F5F0', padding: 24, paddingTop: 60 },
+  container: { flex: 1, backgroundColor: '#F5F5F0', padding: 24, paddingTop: 24 },
+  heroBanner: {
+    backgroundColor: '#1A1A1A',
+    paddingVertical: 40,
+    alignItems: 'center',
+  },
   logoImage: {
-    width: 240,
-    height: 240,
-    borderRadius: 120,
+    width: 280,
+    height: 200,
     alignSelf: 'center',
-    marginBottom: 16,
   },
   title: { fontSize: 28, fontWeight: 'bold', color: '#1A1A1A', textAlign: 'center', marginBottom: 24 },
   section: { marginBottom: 24 },
