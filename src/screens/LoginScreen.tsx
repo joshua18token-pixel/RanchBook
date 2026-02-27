@@ -10,7 +10,7 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
-import { signIn, signUp } from '../services/auth';
+import { signIn, signUp, signInWithGoogle, signInWithApple } from '../services/auth';
 
 export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [email, setEmail] = useState('');
@@ -117,6 +117,42 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
           </Text>
         </TouchableOpacity>
 
+        {/* Divider */}
+        <View style={styles.divider}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>or continue with</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        {/* OAuth buttons */}
+        <TouchableOpacity
+          style={[styles.oauthButton, styles.googleButton]}
+          onPress={async () => {
+            try {
+              await signInWithGoogle();
+            } catch (e: any) {
+              showMessage(e.message || 'Google sign-in failed', 'error');
+            }
+          }}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.oauthButtonText}>🔵  Sign in with Google</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.oauthButton, styles.appleButton]}
+          onPress={async () => {
+            try {
+              await signInWithApple();
+            } catch (e: any) {
+              showMessage(e.message || 'Apple sign-in failed', 'error');
+            }
+          }}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.oauthButtonText, styles.appleButtonText]}>🍎  Sign in with Apple</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity
           style={styles.switchButton}
           onPress={() => { setIsSignUp(!isSignUp); setStatusMessage(null); }}
@@ -184,4 +220,24 @@ const styles = StyleSheet.create({
     borderLeftColor: '#FF9800',
   },
   signupInfoText: { fontSize: 14, color: '#666', lineHeight: 20 },
+  divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 20 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: '#ccc' },
+  dividerText: { marginHorizontal: 12, color: '#999', fontSize: 14 },
+  oauthButton: {
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 10,
+    borderWidth: 1,
+  },
+  googleButton: {
+    backgroundColor: '#fff',
+    borderColor: '#ddd',
+  },
+  appleButton: {
+    backgroundColor: '#000',
+    borderColor: '#000',
+  },
+  oauthButtonText: { fontSize: 17, fontWeight: '600', color: '#333' },
+  appleButtonText: { color: '#fff' },
 });

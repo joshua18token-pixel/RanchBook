@@ -39,10 +39,12 @@ export default function App() {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session) {
         setAppState('login');
         setRanchId(null);
+      } else if (event === 'SIGNED_IN') {
+        setAppState('ranch_select');
       }
     });
 
