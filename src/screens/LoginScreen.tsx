@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
 } from 'react-native';
 import { signIn, signUp, signInWithGoogle, signInWithApple } from '../services/auth';
 
@@ -136,7 +137,10 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
           }}
           activeOpacity={0.8}
         >
-          <Text style={styles.oauthButtonText}>🔵  Sign in with Google</Text>
+          <View style={styles.oauthContent}>
+            <Image source={require('../../assets/icons/google-logo.png')} style={styles.oauthIcon} />
+            <Text style={styles.oauthButtonText}>Sign in with Google</Text>
+          </View>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -150,7 +154,10 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
           }}
           activeOpacity={0.8}
         >
-          <Text style={[styles.oauthButtonText, styles.appleButtonText]}>🍎  Sign in with Apple</Text>
+          <View style={styles.oauthContent}>
+            <Image source={require('../../assets/icons/apple-logo.png')} style={[styles.oauthIcon, { tintColor: '#fff' }]} />
+            <Text style={[styles.oauthButtonText, styles.appleButtonText]}>Sign in with Apple</Text>
+          </View>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -238,6 +245,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
     borderColor: '#000',
   },
+  oauthContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  oauthIcon: { width: 22, height: 22, marginRight: 10, resizeMode: 'contain' },
   oauthButtonText: { fontSize: 17, fontWeight: '600', color: '#333' },
   appleButtonText: { color: '#fff' },
 });
