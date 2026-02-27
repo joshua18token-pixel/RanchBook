@@ -118,7 +118,7 @@ export default function App() {
 
   return (
     <AppContext.Provider value={{ switchToRanchSelect: () => setAppState('ranch_select') }}>
-    <NavigationContainer key={`nav-${ranchId}-${navKey}`} documentTitle={{ formatter: (options) => options?.title ? `${options.title} | RanchBook` : 'RanchBook' }}>
+    <NavigationContainer key={`nav-${ranchId}-${navKey}`} linking={linking} documentTitle={{ formatter: (options) => options?.title ? `${options.title} | RanchBook` : 'RanchBook' }}>
       <Stack.Navigator
         screenOptions={{ headerStyle, headerTintColor, headerTitleStyle }}
       >
