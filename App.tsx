@@ -68,15 +68,21 @@ export default function App() {
         setAppState('login');
         setRanchId(null);
       } else if (event === 'SIGNED_IN') {
-        // Auto-accept invite after sign in/up
-        const inv = getInviteParams() || inviteParams;
-        if (inv?.ranchId) {
-          import('./src/services/auth').then(({ acceptInvite }) => {
-            acceptInvite(inv.ranchId!).catch(() => {});
-            if (typeof window !== 'undefined') window.history.replaceState({}, '', '/');
-          });
-        }
-        setAppState('ranch_select');
+        // Only navigate to ranch_select if we're on the login screen
+        // Token refreshes also fire SIGNED_IN — don't disrupt the user
+        setAppState(prev => {
+          if (prev === 'login' || prev === 'loading') {
+            const inv = getInviteParams() || inviteParams;
+            if (inv?.ranchId) {
+              import('./src/services/auth').then(({ acceptInvite }) => {
+                acceptInvite(inv.ranchId!).catch(() => {});
+                if (typeof window !== 'undefined') window.history.replaceState({}, '', '/');
+              });
+            }
+            return 'ranch_select';
+          }
+          return prev;
+        });
       }
     });
 
