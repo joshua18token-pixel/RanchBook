@@ -12,7 +12,7 @@ import {
   Modal,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { addCow, getAllPastures, addPasture, getRanchBreeds, addRanchBreed, addMedicalIssue } from '../services/database';
+import { addCow, getAllPastures, addPasture, getRanchBreeds, addRanchBreed, addMedicalIssue, getMedicalPresets } from '../services/database';
 import PhotoViewer from '../components/PhotoViewer';
 import { CowStatus, Pasture } from '../types';
 
@@ -43,6 +43,7 @@ export default function AddCowScreen({ navigation, route }: any) {
   const [motherTag, setMotherTag] = useState('');
   const [medicalLabels, setMedicalLabels] = useState<string[]>([]);
   const [newMedicalInput, setNewMedicalInput] = useState('');
+  const [medicalPresets, setMedicalPresets] = useState<{ id: string; label: string }[]>([]);
   const [saving, setSaving] = useState(false);
   const [tagLabelPickerIndex, setTagLabelPickerIndex] = useState<number | null>(null);
   const [ranchBreeds, setRanchBreeds] = useState<string[]>([]);
@@ -53,6 +54,7 @@ export default function AddCowScreen({ navigation, route }: any) {
       getRanchBreeds(ranchId)
         .then(breeds => setRanchBreeds(breeds.map(b => b.name)))
         .catch(() => setRanchBreeds(FALLBACK_BREEDS));
+      getMedicalPresets(ranchId).then(setMedicalPresets).catch(() => {});
     }
   }, []);
 
@@ -331,6 +333,23 @@ export default function AddCowScreen({ navigation, route }: any) {
             ))}
           </View>
         )}
+        {/* Medical presets from ranch */}
+        {medicalPresets.filter(p => !medicalLabels.includes(p.label)).length > 0 && (
+          <View style={styles.medicalPresetsRow}>
+            {medicalPresets
+              .filter(p => !medicalLabels.includes(p.label))
+              .map(preset => (
+                <TouchableOpacity
+                  key={preset.id}
+                  style={styles.medicalPresetBtn}
+                  onPress={() => setMedicalLabels([...medicalLabels, preset.label])}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.medicalPresetText}>+ {preset.label}</Text>
+                </TouchableOpacity>
+              ))}
+          </View>
+        )}
         <View style={styles.addMedicalRow}>
           <TextInput
             style={[styles.input, { flex: 1, marginRight: 8 }]}
@@ -582,6 +601,18 @@ const styles = StyleSheet.create({
   },
   medicalTagLabel: { fontSize: 14, fontWeight: 'bold', color: '#D32F2F', marginRight: 8 },
   medicalTagRemove: { fontSize: 14, color: '#D32F2F', fontWeight: 'bold' },
+  medicalPresetsRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 },
+  medicalPresetBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#D32F2F',
+    borderStyle: 'dashed',
+    marginRight: 8,
+    marginBottom: 6,
+  },
+  medicalPresetText: { fontSize: 13, color: '#D32F2F', fontWeight: '600' },
   addMedicalRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   breedRow: { flexDirection: 'row', flexWrap: 'wrap' },
   breedOption: {
