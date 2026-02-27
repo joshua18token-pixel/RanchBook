@@ -139,9 +139,9 @@ export default function App() {
           headerStyle,
           headerTintColor,
           headerTitleStyle,
-          headerRight: () => (
+          ...(Platform.OS === 'web' ? { headerRight: () => (
             <Image source={require('./assets/ranchbook-text.png')} style={{ width: 120, height: 20, resizeMode: 'contain', marginRight: 12, opacity: 0.8 }} />
-          ),
+          ) } : {}),
         }}
       >
         <Stack.Screen
