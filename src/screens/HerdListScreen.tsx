@@ -238,6 +238,15 @@ export default function HerdListScreen({ navigation, route }: any) {
         >
           <Text style={styles.teamFabText}>👥</Text>
         </TouchableOpacity>
+        {route.params?.myRole === 'manager' && (
+          <TouchableOpacity
+            style={styles.settingsFab}
+            onPress={() => navigation.navigate('Subscription', { ranchId: route.params?.ranchId, ranchName: route.params?.ranchName })}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.settingsFabText}>⚙️</Text>
+          </TouchableOpacity>
+        )}
       </View>
       <TouchableOpacity
         style={styles.fab}
@@ -364,6 +373,20 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   teamFabText: { fontSize: 24 },
+  settingsFab: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#1A1A1A',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  settingsFabText: { fontSize: 22 },
   fab: {
     position: 'absolute',
     bottom: 30,

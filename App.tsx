@@ -14,6 +14,7 @@ import HerdListScreen from './src/screens/HerdListScreen';
 import AddCowScreen from './src/screens/AddCowScreen';
 import CowDetailScreen from './src/screens/CowDetailScreen';
 import TeamScreen from './src/screens/TeamScreen';
+import SubscriptionScreen from './src/screens/SubscriptionScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -190,6 +191,19 @@ export default function App() {
             )} : {}),
           })}
           initialParams={{ ranchId, myRole }}
+        />
+        <Stack.Screen
+          name="Subscription"
+          component={SubscriptionScreen}
+          options={({ navigation }) => ({
+            title: Platform.OS === 'web' ? `${ranchName}: Subscription` : 'Subscription',
+            ...(Platform.OS === 'web' ? { headerLeft: () => (
+              <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 12 }}>
+                <Text style={{ color: '#C5A55A', fontSize: 18 }}>← Back</Text>
+              </TouchableOpacity>
+            )} : {}),
+          })}
+          initialParams={{ ranchId, ranchName }}
         />
       </Stack.Navigator>
     </NavigationContainer>

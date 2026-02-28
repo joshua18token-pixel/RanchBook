@@ -1,73 +1,103 @@
-# RanchBook Billing Spec
+# RanchBook Billing Spec v2
 
 ## Tiers
 
-### Starter (Free)
+### Free
 - Up to 10 cows per ranch
 - All features included (no feature gating)
 - Unlimited team members
 - No credit card required
 - Adding cow #11 prompts upgrade
 
-### Ranch Pro — Monthly
-- Unlimited cows
-- **(cows over 10) × $1/year ÷ 12** per month
-- **$10/month minimum** once in paid tier
-- Billed monthly based on **peak cow count** during billing period
-- Peak count prevents gaming (deleting cows before billing day)
+### Starter — $10/mo ($102/yr)
+- Up to 100 cows
+- All features
+- Unlimited team members
 
-### Ranch Pro — Annual
+### Ranch Pro — $20/mo ($204/yr)
+- Up to 500 cows
+- All features
+- Unlimited team members
+
+### Ranch Max — $35/mo ($357/yr)
 - Unlimited cows
-- **(cows over 10) × $0.85/year** (15% discount)
-- **$102/year minimum** ($10/mo equivalent)
-- Paid upfront
-- 30-day free trial with all features, no cow limit
-- If overflow occurs (more cows than plan covers), overflow billed monthly using same monthly formula ($10/mo minimum on overflow)
+- All features
+- Unlimited team members
+
+**Annual plans = 15% discount**
 
 ## Billing Rules
 
 - **Who pays:** The ranch. Manager (owner) is billing contact.
-- **Multi-ranch:** Each ranch billed separately based on its own cow count.
-- **Peak billing:** Monthly bill uses highest cow count during the billing period. Resets each period.
-- **Unpaid/expired:** Ranch enters **read-only mode** — can view, search, export, but cannot add/edit cows. Data is NEVER deleted. 10 free cows still editable.
+- **Multi-ranch:** Each ranch billed separately.
+- **Tier based on peak cow count** during billing period.
+- **Auto-upgrade:** If ranch exceeds tier limit, prompt to upgrade. Can't add cows beyond limit without upgrading.
+- **Downgrade:** If cows drop below tier limit, can downgrade at next billing period.
+- **Unpaid/expired:** Ranch enters **read-only mode** — can view, search, export. Cannot add/edit. Data NEVER deleted. Free tier (10 cows) still editable.
 - **Payment restored:** Full access unlocks instantly, all data intact.
+- **30-day free trial:** For Starter+ plans. All features, no cow limit. After 30 days → read-only if no payment.
 
 ## Super Admin
 
-- Separate from ranch manager role — app-level admin
+- App-level admin (separate from ranch manager)
 - Can view all ranches, all users, metrics
-- Can grant **lifetime free membership** to any ranch (`subscription_override` flag)
+- Can grant **lifetime free membership** to any ranch
 - Can revoke lifetime free at any time
-- Super admin identified by user ID(s) in config/environment variable
+- Super admin identified by user ID(s) in environment variable
 
 ## Lifetime Free Membership
 
 - `subscription_override` field on `ranches` table
-- Values: `null` (normal billing), `'lifetime_free'` (no charges ever), `'trial'` (30-day trial)
-- Billing logic checks this flag first — if set to `lifetime_free`, skip all payment checks
+- Values: `null` (normal billing), `'lifetime_free'`, `'trial'`
+- Billing logic checks this first — if `lifetime_free`, skip all payment checks
 - Only super admin can set/revoke
 
-## Future Ideas (Not Building Yet)
+## Database Changes
 
-### Day Worker Account Type
-- Free account not tied to specific ranch
-- Read-only access to any ranch they're invited to (no cost to ranch)
-- Carries profile across ranches
+### Add to `ranches` table:
+```sql
+ALTER TABLE ranches ADD COLUMN stripe_customer_id TEXT;
+ALTER TABLE ranches ADD COLUMN stripe_subscription_id TEXT;
+ALTER TABLE ranches ADD COLUMN subscription_tier TEXT DEFAULT 'free'; -- free, starter, pro, max
+ALTER TABLE ranches ADD COLUMN subscription_status TEXT DEFAULT 'active'; -- active, trial, past_due, canceled, read_only
+ALTER TABLE ranches ADD COLUMN subscription_override TEXT; -- null, lifetime_free, trial
+ALTER TABLE ranches ADD COLUMN trial_ends_at TIMESTAMPTZ;
+ALTER TABLE ranches ADD COLUMN current_period_end TIMESTAMPTZ;
+ALTER TABLE ranches ADD COLUMN peak_cow_count INTEGER DEFAULT 0;
+```
 
-### Referral Program ("Cowboy Credits")
-- Unique referral code per user
-- New ranch signup via code → referrer gets credit ($5 off or free month)
-- Traveling cowboys could use app free through referrals
+### Stripe Products to Create:
+- **Starter Monthly:** $10/mo
+- **Starter Annual:** $102/yr
+- **Ranch Pro Monthly:** $20/mo
+- **Ranch Pro Annual:** $204/yr
+- **Ranch Max Monthly:** $35/mo
+- **Ranch Max Annual:** $357/yr
 
-### Commission Model
-- Cowboys earn % of first year revenue from referred ranches
-- Paid via Stripe Connect or app credit
+## Implementation
 
-## Implementation Notes
+### Frontend:
+- Pricing/upgrade screen accessible from ranch settings
+- Stripe Checkout for payment collection (redirect to Stripe-hosted page)
+- Subscription status shown in ranch settings
+- "Upgrade" prompts when hitting cow limits
+- Read-only mode banner when subscription lapses
 
-- **Stripe Billing** for subscriptions
-- **Stripe Checkout** for credit card collection
-- **Supabase Edge Function** for cow count calculation + Stripe webhook handling
-- **Stripe Products:** Create "Ranch Pro Monthly" and "Ranch Pro Annual" products
-- **Metered billing** for monthly plan (report usage each period)
-- Add `stripe_customer_id`, `stripe_subscription_id`, `subscription_status`, `subscription_override` columns to `ranches` table
+### Backend (Supabase Edge Functions):
+- `create-checkout-session` — creates Stripe Checkout session for selected plan
+- `stripe-webhook` — handles Stripe events (payment success, failure, subscription changes)
+- `check-subscription` — validates ranch has active subscription for cow count
+- `manage-subscription` — cancel, change plan, update payment method
+
+### Stripe Webhook Events to Handle:
+- `checkout.session.completed` — subscription created
+- `invoice.paid` — payment succeeded
+- `invoice.payment_failed` — payment failed
+- `customer.subscription.updated` — plan changed
+- `customer.subscription.deleted` — subscription canceled
+
+## Cow Limits by Tier:
+- Free: 10
+- Starter: 100
+- Ranch Pro: 500
+- Ranch Max: unlimited (999999)
